@@ -16,10 +16,10 @@ const trans = {
   'es': es,
   'zh-TW': zhTW,
 }
-export function T (key, params, num = 0) {
+export function T (key, params = {}, num = 0) {
   const appStore = useAppStore()
   const lang = appStore.setting.lang
-  const tran = trans[lang]?.[key]
+  const tran = trans[lang]?.[key] || en[key]
   if (!tran) {
     return key
   }
@@ -28,6 +28,6 @@ export function T (key, params, num = 0) {
   //params 是这样 {name: 'zhangsan'}
   //替换
   return msg.replace(/{(\w+)}/g, function (match, key) {
-    return params[key] || match
+    return params[key] ?? match
   })
 }
