@@ -1,15 +1,13 @@
 name: Frontend verification
 
 on:
-  push:
-    branches: [codex/praesto-remote-control]
   pull_request:
 
 permissions:
   contents: read
 
 concurrency:
-  group: frontend-${{ github.head_ref || github.ref_name }}
+  group: frontend-pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
