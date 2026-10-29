@@ -120,10 +120,10 @@
     "One": "Memory"
   },
   "Os": {
-    "One": "Os"
+    "One": "OS"
   },
   "Uuid": {
-    "One": "Uuid"
+    "One": "UUID"
   },
   "Version": {
     "One": "Version"
@@ -380,7 +380,7 @@
     "One": "Num"
   },
   "Ip": {
-    "One": "Ip"
+    "One": "IP"
   },
   "FileName": {
     "One": "File Name"

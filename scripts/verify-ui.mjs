@@ -290,7 +290,9 @@ try {
         await routeLink(page, pathname).click()
         await waitForRoute(page, pathname)
         assert.equal(await routeLink(page, pathname).getAttribute('aria-current'), 'page')
-        assert.ok((await page.locator('h1').first().innerText()).trim().length > 0)
+        const heading = (await page.locator('h1').first().innerText()).trim()
+        assert.ok(heading.length > 0)
+        await visible(page.getByRole('navigation', { name: 'Open pages', exact: true }).getByRole('link', { name: heading, exact: true }))
       }
       await routeLink(page, '/my/peer').click()
       await devicesReady(page)

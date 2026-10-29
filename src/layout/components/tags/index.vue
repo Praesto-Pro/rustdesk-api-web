@@ -14,7 +14,7 @@ import { computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTagsStore } from '@/store/tags'
 import { useRouteStore } from '@/store/router'
-import { permittedLeaves } from '@/utils/navigation'
+import { buildNavigation, permittedLeaves } from '@/utils/navigation'
 import { T } from '@/utils/i18n'
 const tags = useTagsStore()
 const routes = useRouteStore()
@@ -22,7 +22,8 @@ const route = useRoute()
 const router = useRouter()
 const visibleTags = computed(() => {
   const permitted = new Set(permittedLeaves(routes.routes).map(item => item.name))
-  return tags.tags.filter(tag => permitted.has(tag.name))
+  const labels = new Map(buildNavigation(routes.routes).flatMap(group => group.items.map(item => [item.name, item.title])))
+  return tags.tags.filter(tag => permitted.has(tag.name)).map(tag => ({ ...tag, title: labels.get(tag.name) || tag.title }))
 })
 watch(() => route.fullPath, () => {
   if (route.name && !route.meta?.hide) {
