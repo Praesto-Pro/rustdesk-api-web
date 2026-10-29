@@ -1,0 +1,56 @@
+name: Frontend verification
+
+on:
+  push:
+    branches: [codex/praesto-remote-control]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PRC_CONTRACT_BASE: ${{ github.event.pull_request.base.sha || '3998c2a9213fcd047252776d0f0db33e6717026c' }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install locked application dependencies
+        run: npm ci
+      - name: Verify preserved backend contracts
+        run: node scripts/verify-contracts.mjs
+      - name: Build production frontend
+        run: npm run build
+      - name: Install isolated browser verification tools
+        run: |
+          npm install --no-save --package-lock=false --ignore-scripts playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Capture the original interface
+        continue-on-error: true
+        run: |
+          git worktree add --detach "$RUNNER_TEMP/prc-before" 3998c2a9213fcd047252776d0f0db33e6717026c
+          ln -s "$GITHUB_WORKSPACE/node_modules" "$RUNNER_TEMP/prc-before/node_modules"
+          npm --prefix "$RUNNER_TEMP/prc-before" run build
+          node scripts/verify-ui.mjs --baseline --dist="$RUNNER_TEMP/prc-before/dist"
+      - name: Verify navigation, responsive views, and sign-in
+        run: node scripts/verify-ui.mjs
+      - name: Save interface evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: praesto-remote-control-ui
+          path: ui-artifacts/
+          if-no-files-found: warn
+          retention-days: 7

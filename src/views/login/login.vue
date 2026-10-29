@@ -1,297 +1,196 @@
 <template>
-  <div class="login-container">
-    <div class="login-card">
-      <img src="@/assets/logo.png" alt="logo" class="login-logo"/>
-
-      <el-form v-if="!disablePwd" label-position="top" class="login-form">
-        <el-form-item :label="T('Username')">
-          <el-input v-model="form.username" type="username" class="login-input"></el-input>
-        </el-form-item>
-
-        <el-form-item :label="T('Password')">
-          <el-input v-model="form.password" type="password" @keyup.enter.native="login" show-password
-                    class="login-input"></el-input>
-        </el-form-item>
-        <el-form-item :label="T('Captcha')" v-if="captchaCode">
-          <el-input v-model="form.captcha" @keyup.enter.native="login"  class="login-input captcha-input">
-            <template #append>
-              <img :src="captchaCode.b64" @click="loadCaptcha" class="captcha" alt="captcha"/>
-            </template>
-          </el-input>
-        </el-form-item>
-        <el-form-item>
-          <el-button @click="login" type="primary" class="login-button">{{ T('Login') }}</el-button>
-          <el-button v-if="allowRegister" @click="register" class="login-button">{{ T('Register') }}</el-button>
-        </el-form-item>
-      </el-form>
-
-      <div class="divider" v-if="options.length > 0 && !disablePwd">
-        <span>{{ T('or login in with') }}</span>
+  <main class="auth-page">
+    <section class="auth-panel" aria-labelledby="sign-in-title">
+      <div class="auth-brand"><BrandMark /></div>
+      <h1 id="sign-in-title" class="auth-heading">{{ T('Sign in') }}</h1>
+      <p class="auth-description">{{ T('Access your devices and address books.') }}</p>
+      <div v-if="optionsLoading" class="auth-progress" role="status" aria-live="polite">{{ T('Loading sign-in options…') }}</div>
+      <div v-if="optionsError" class="auth-status" role="alert">
+        <p>{{ optionsError }}</p>
+        <el-button @click="loadLoginOptions()" :loading="optionsLoading">{{ T('Try again') }}</el-button>
       </div>
-
-      <div class="oidc-options">
-        <div v-for="(option, index) in options" :key="index" class="oidc-option">
-          <el-button @click="handleOIDCLogin(option.name)" class="oidc-btn">
-            <img :src="getProviderImage(option.name)" alt="provider" class="oidc-icon"/>
+      <div v-if="signInError" class="auth-status" role="alert"><p>{{ signInError }}</p></div>
+      <template v-if="optionsReady">
+        <el-form v-if="!disablePwd" ref="formRef" :model="form" :rules="rules" label-position="top" class="auth-form" @submit.prevent="login">
+          <el-form-item :label="T('Username')" prop="username">
+            <el-input v-model="form.username" name="username" autocomplete="username" :disabled="signingIn || !!pendingProvider" />
+          </el-form-item>
+          <el-form-item :label="T('Password')" prop="password">
+            <el-input v-model="form.password" name="password" type="password" autocomplete="current-password" show-password :disabled="signingIn || !!pendingProvider" />
+          </el-form-item>
+          <el-form-item v-if="captchaRequired" :label="T('Captcha')" prop="captcha">
+            <div class="auth-captcha">
+              <el-input v-model="form.captcha" name="captcha" autocomplete="off" :disabled="signingIn || !!pendingProvider || captchaLoading" aria-describedby="captcha-help" />
+              <button type="button" class="auth-captcha-refresh" :aria-label="T('Refresh verification image')" :title="T('Refresh verification image')" :disabled="captchaLoading || signingIn || !!pendingProvider" @click="loadCaptcha">
+                <img v-if="captchaCode" :src="captchaCode.b64" :alt="T('Verification image')" />
+                <span v-else>{{ captchaLoading ? T('Loading…') : T('Retry') }}</span>
+              </button>
+            </div>
+            <p id="captcha-help" class="auth-field-help">{{ T('Enter the characters shown in the image.') }}</p>
+            <p v-if="captchaError" class="auth-field-help" role="alert">{{ captchaError }}</p>
+          </el-form-item>
+          <el-button native-type="submit" type="primary" class="auth-submit" :loading="signingIn" :disabled="!!pendingProvider || captchaLoading || (captchaRequired && !captchaCode)">{{ T('Sign in') }}</el-button>
+        </el-form>
+        <div v-if="options.length && !disablePwd" class="auth-divider"><span>{{ T('Or continue with') }}</span></div>
+        <div v-if="options.length" class="auth-providers">
+          <el-button v-for="option in options" :key="option.name" class="auth-provider" :loading="pendingProvider === option.name" :disabled="signingIn || (!!pendingProvider && pendingProvider !== option.name)" @click="handleOIDCLogin(option.name)">
+            <img :src="getProviderImage(option.name)" alt="" />
             <span>{{ T(option.name) }}</span>
           </el-button>
         </div>
-      </div>
-    </div>
-  </div>
+        <div v-else-if="disablePwd" class="auth-status" role="status"><p>{{ T('No sign-in methods are available. Contact your administrator.') }}</p></div>
+        <div v-if="allowRegister && !disablePwd" class="auth-footer">
+          <span>{{ T('Need an account?') }}</span>
+          <router-link to="/register">{{ T('Register') }}</router-link>
+        </div>
+      </template>
+    </section>
+  </main>
 </template>
 
 <script setup>
-  import { reactive, onMounted, ref } from 'vue'
-  import { useUserStore } from '@/store/user'
-  import { ElMessage } from 'element-plus'
-  import { T } from '@/utils/i18n'
-  import { useRoute, useRouter } from 'vue-router'
-  import { loginOptions, captcha } from '@/api/login'
-  import { getCode, removeCode } from '@/utils/auth'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import BrandMark from '@/components/BrandMark.vue'
+import { useUserStore } from '@/store/user'
+import { T } from '@/utils/i18n'
+import { loginOptions, captcha } from '@/api/login'
+import { getCode, removeCode } from '@/utils/auth'
+import googleImage from '@/assets/google.png'
+import githubImage from '@/assets/github.png'
+import oidcImage from '@/assets/oidc.png'
+import '@/styles/auth.scss'
 
-  const oauthInfo = ref({})
-  const userStore = useUserStore()
-  const route = useRoute()
-  const router = useRouter()
-  const options = reactive([]) // 存储 OIDC 登录选项
+const userStore = useUserStore()
+const route = useRoute()
+const router = useRouter()
+const formRef = ref(null)
+const options = ref([])
+const optionsLoading = ref(true)
+const optionsReady = ref(false)
+const optionsError = ref('')
+const signInError = ref('')
+const signingIn = ref(false)
+const pendingProvider = ref('')
+const allowRegister = ref(false)
+const disablePwd = ref(false)
+const captchaCode = ref(null)
+const captchaRequired = ref(false)
+const captchaLoading = ref(false)
+const captchaError = ref('')
 
-  let platform = window.navigator.platform
-  if (navigator.platform.indexOf('Mac') === 0) {
-    platform = 'mac'
-  } else if (navigator.platform.indexOf('Win') === 0) {
-    platform = 'windows'
-  } else if (navigator.platform.indexOf('Linux armv') === 0) {
-    platform = 'android'
-  } else if (navigator.platform.indexOf('Linux') === 0) {
-    platform = 'linux'
-  }
-  const userAgent = navigator.userAgent
-  let browser = 'Unknown Browser'
-  if (/chrome|crios/i.test(userAgent)) browser = 'Chrome'
-  else if (/firefox|fxios/i.test(userAgent)) browser = 'Firefox'
-  else if (/safari/i.test(userAgent) && !/chrome/i.test(userAgent)) browser = 'Safari'
-  else if (/edg/i.test(userAgent)) browser = 'Edge'
+let platform = navigator.platform
+if (platform.indexOf('Mac') === 0) platform = 'mac'
+else if (platform.indexOf('Win') === 0) platform = 'windows'
+else if (platform.indexOf('Linux armv') === 0) platform = 'android'
+else if (platform.indexOf('Linux') === 0) platform = 'linux'
+const userAgent = navigator.userAgent
+let browser = 'Unknown Browser'
+if (/chrome|crios/i.test(userAgent)) browser = 'Chrome'
+else if (/firefox|fxios/i.test(userAgent)) browser = 'Firefox'
+else if (/safari/i.test(userAgent) && !/chrome/i.test(userAgent)) browser = 'Safari'
+else if (/edg/i.test(userAgent)) browser = 'Edge'
 
-  const form = reactive({
-    username: '',
-    password: '',
-    platform: platform,
-    captcha: '',
-    captcha_id: ''
-  })
-
-  const captchaCode = ref('')
-  const redirect = route.query?.redirect
-  const login = async () => {
-    const res = await userStore.login(form).catch(e => e)
-    if (!res.code) {
-      ElMessage.success(T('LoginSuccess'))
-      router.push({ path: redirect || '/', replace: true })
-      return
+const form = reactive({ username: '', password: '', platform, captcha: '', captcha_id: '' })
+const rules = computed(() => ({
+  username: [{ required: true, message: T('ParamRequired', { param: T('Username') }), trigger: 'blur' }],
+  password: [{ required: true, message: T('ParamRequired', { param: T('Password') }), trigger: 'blur' }],
+  captcha: [{ required: captchaRequired.value, message: T('ParamRequired', { param: T('Captcha') }), trigger: 'blur' }],
+}))
+const completeSignIn = async () => {
+  ElMessage.success(T('LoginSuccess'))
+  const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
+  await router.replace(redirect || '/')
+}
+const login = async () => {
+  if (signingIn.value || pendingProvider.value || disablePwd.value || !optionsReady.value || captchaLoading.value) return
+  if (captchaRequired.value && !captchaCode.value) return
+  signingIn.value = true
+  signInError.value = ''
+  try {
+    if (!await formRef.value.validate().catch(() => false)) return
+    await userStore.login(form)
+    await completeSignIn()
+  } catch (error) {
+    signInError.value = T('Unable to sign in. Check your details and try again.')
+    if (error?.code === 110) {
+      captchaRequired.value = true
+      await loadCaptcha()
     }
-    if (res.code === 110) {
-      // need captcha
-      loadCaptcha()
-    }
+  } finally {
+    signingIn.value = false
   }
-
-  const loadCaptcha = async () => {
-    const captchaRes = await captcha().catch(_ => false)
-    console.log(captchaRes)
-    captchaCode.value = captchaRes.data.captcha
-    form.captcha_id = captchaRes.data.captcha.id
+}
+const loadCaptcha = async () => {
+  if (captchaLoading.value) return
+  captchaLoading.value = true
+  captchaError.value = ''
+  try {
+    const res = await captcha()
+    if (!res?.data?.captcha?.b64 || !res.data.captcha.id) throw new Error('Missing captcha')
+    captchaCode.value = res.data.captcha
+    form.captcha_id = res.data.captcha.id
+    form.captcha = ''
+  } catch {
+    captchaCode.value = null
+    form.captcha_id = ''
+    captchaError.value = T('The verification image could not load. Select Retry to try again.')
+  } finally {
+    captchaLoading.value = false
   }
-
-  const handleOIDCLogin = (provider) => {
-    userStore.oidc(provider, platform, browser)
+}
+const handleOIDCLogin = async (provider) => {
+  if (pendingProvider.value) return
+  pendingProvider.value = provider
+  signInError.value = ''
+  try {
+    await userStore.oidc(provider, platform, browser)
+  } catch {
+    signInError.value = T('Unable to start sign-in. Try again.')
+  } finally {
+    pendingProvider.value = ''
   }
-
-  import googleImage from '@/assets/google.png'
-  import githubImage from '@/assets/github.png'
-  import oidcImage from '@/assets/oidc.png'
-  import webauthImage from '@/assets/webauth.png'
-  import defaultImage from '@/assets/oidc.png'
-
-  const providerImageMap = {
-    google: googleImage,
-    github: githubImage,
-    oidc: oidcImage,
-    // WebAuth: webauthImage,
-    default: defaultImage,
+}
+const providerImageMap = { google: googleImage, github: githubImage, oidc: oidcImage }
+const getProviderImage = (provider) => providerImageMap[provider.toLowerCase()] || oidcImage
+const loadLoginOptions = async (autoLogin = true) => {
+  optionsLoading.value = true
+  optionsError.value = ''
+  try {
+    const res = await loginOptions()
+    if (!res?.data || !Array.isArray(res.data.ops)) throw new Error('Missing sign-in options')
+    options.value = res.data.ops.map(name => ({ name }))
+    disablePwd.value = !!res.data.disable_pwd
+    allowRegister.value = !!res.data.register
+    captchaRequired.value = !!res.data.need_captcha
+    optionsReady.value = true
+    if (captchaRequired.value) await loadCaptcha()
+    if (autoLogin && res.data.auto_oidc && res.data.ops.length) await handleOIDCLogin(res.data.ops[0])
+  } catch {
+    optionsReady.value = false
+    optionsError.value = T('Sign-in options could not load. Try again.')
+  } finally {
+    optionsLoading.value = false
   }
-
-  const getProviderImage = (provider) => {
-    return providerImageMap[provider.toLowerCase()] || providerImageMap.default
-  }
-
-  const allowRegister = ref(false)
-  const disablePwd = ref(false)
-  const loadLoginOptions = async () => {
+}
+onMounted(async () => {
+  const code = getCode()
+  if (code) {
     try {
-      const res = await loginOptions().catch(_ => false)
-      if (!res || !res.data) return console.error('No valid response received')
-      res.data.ops.map(option => (options.push({ name: option }))) // 创建新的对象数组
-      if (res.data.auto_oidc) {
-        // 如果有自动OIDC登录选项，直接调用第一个
-        handleOIDCLogin(res.data.ops[0])
-      }
-      disablePwd.value = res.data.disable_pwd
-      allowRegister.value = res.data.register
-      if (res.data.need_captcha) {
-        loadCaptcha()
-      }
-    } catch (error) {
-      console.error('Error loading login options:', error.message)
-    }
-  }
-
-  onMounted(async () => {
-    const code = getCode()
-    if (code) {
-      // 如果code存在，进行query获取user info
       const res = await userStore.query(code)
       if (res) {
-        // 删除code，确保跳转之前对code进行清楚
         removeCode()
-        ElMessage.success(T('LoginSuccess'))
-        router.push({ path: redirect || '/', replace: true })
+        await completeSignIn()
+        return
       }
-    } else {
-      // 如果code不存在, 现实登陆页面
-      loadLoginOptions() // 组件挂载后调用登录选项加载函数
+    } catch {
+      // Keep the form available when an external sign-in cannot be completed.
     }
-  })
-
-  const register = () => {
-    router.push('/register')
+    signInError.value = T('Sign-in was not completed. Try again or choose another method.')
+    await loadLoginOptions(false)
+  } else {
+    await loadLoginOptions()
   }
+})
 </script>
-
-<style scoped lang="scss">
-.login-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background-color: #2d3a4b;
-  padding: 20px;
-  box-sizing: border-box;
-}
-
-.login-card {
-  width: 360px;
-  background-color: #283342;
-  padding: 40px;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  text-align: center;
-}
-
-h1 {
-  margin-bottom: 20px;
-  font-size: 24px;
-  font-weight: bold;
-}
-
-.login-form {
-  margin-bottom: 20px;
-}
-
-.login-input {
-  width: 100%;
-  .captcha{
-    cursor: pointer;
-    width: 150px;
-  }
-}
-.captcha-input{
-  :deep(.el-input-group__append) {
-    border-radius: 5px;
-    padding: 0;
-    overflow: hidden;
-  }
-}
-
-.login-button {
-  width: 100%;
-  height: 40px;
-  margin-bottom: 20px;
-  margin-left: 0;
-}
-
-.divider {
-  display: flex;
-  align-items: center;
-  margin: 20px 0;
-  font-size: 14px;
-  color: #888;
-
-  &::before,
-  &::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background-color: #ddd;
-  }
-
-  &::before {
-    margin-right: 10px;
-  }
-
-  &::after {
-    margin-left: 10px;
-  }
-}
-
-.oidc-options {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.oidc-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  height: 50px;
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  color: black;
-  font-size: 14px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.oidc-icon {
-  width: 24px;
-  height: 24px;
-  margin-right: 10px;
-}
-
-.login-logo {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 20px;
-  display: block;
-}
-
-.el-form-item {
-  ::v-deep(.el-form-item__label) {
-    color: #fff;
-  }
-
-  .el-input {
-    ::v-deep(.el-input__wrapper) {
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      background: transparent;
-    }
-
-    ::v-deep(input) {
-      color: #fff;
-    }
-  }
-}
-</style>
