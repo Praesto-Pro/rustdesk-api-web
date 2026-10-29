@@ -1,5 +1,5 @@
 {
-  "name": "hello-vue3",
+  "name": "praesto-remote-control",
   "version": "0.0.0",
   "scripts": {
     "dev": "vite --host",
@@ -28,5 +28,6 @@
     "sass-loader": "^12.3.0",
     "ts-proto": "^1.141.1",
     "vite": "6.3.4"
-  }
+  },
+  "description": "Praesto Remote Control frontend for the existing RustDesk API."
 }

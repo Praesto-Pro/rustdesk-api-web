@@ -1,5 +1,7 @@
 import { defineStore, acceptHMRUpdate } from 'pinia'
-import logo from '@/assets/logo.png'
+import logo from '@/assets/praesto-mark.svg'
+import { PRODUCT_NAME } from '@/brand'
+import { normalizeLanguage } from '@/utils/locale'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import en from 'element-plus/es/locale/lang/en'
 import ko from 'element-plus/es/locale/lang/ko'
@@ -18,14 +20,16 @@ const langs = {
   'es': { name: 'Español', value: es, sideBarWidth: '280px' },
   'zh-TW': { name: '中文繁体', value: zhTw, sideBarWidth: '210px' },
 }
-const defaultLang = localStorage.getItem('lang') || navigator.language || 'zh-CN'
+const defaultLang = normalizeLanguage(localStorage.getItem('lang') || navigator.language)
+let sidebarCollapsed = false
+try { sidebarCollapsed = localStorage.getItem('prc-sidebar-collapsed') === 'true' } catch {}
 export const useAppStore = defineStore({
   id: 'App',
   state: () => ({
     setting: {
-      title: 'Rustdesk API Admin',
+      title: PRODUCT_NAME,
       hello: '',
-      sideIsCollapse: false,
+      sideIsCollapse: sidebarCollapsed,
       logo,
       langs: langs,
       lang: defaultLang,
@@ -45,12 +49,13 @@ export const useAppStore = defineStore({
   actions: {
     sideCollapse () {
       this.setting.sideIsCollapse = !this.setting.sideIsCollapse
+      try { localStorage.setItem('prc-sidebar-collapsed', String(this.setting.sideIsCollapse)) } catch {}
     },
     setLang (lang) {
-      console.log('setLang', lang)
-      this.setting.lang = lang
-      this.setting.locale = langs[lang]
-      localStorage.setItem('lang', lang)
+      const supportedLang = normalizeLanguage(lang)
+      this.setting.lang = supportedLang
+      this.setting.locale = langs[supportedLang]
+      localStorage.setItem('lang', supportedLang)
     },
     changeLang (v) {
       this.setLang(v)
@@ -69,13 +74,13 @@ export const useAppStore = defineStore({
     getAdminConfig () {
       console.log('getAdminConfig')
       return admin().then(res => {
-        this.replaceAdminTitle(res.data.title)
+        this.replaceAdminTitle()
         this.setting.hello = res.data.hello
       })
     },
-    replaceAdminTitle (newTitle) {
-      document.title = document.title.replace(`- ${this.setting.title}`, `- ${newTitle}`)
-      this.setting.title = newTitle
+    replaceAdminTitle () {
+      // The product name belongs to this frontend; retain the server's other settings.
+      this.setting.title = PRODUCT_NAME
     },
     async loadRustdeskConfig () {
       console.log('loadRustdeskConfig')

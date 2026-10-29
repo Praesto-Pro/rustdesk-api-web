@@ -1,112 +1,71 @@
 <template>
-  <div class="setting">
-    <div class="menu-item">
-      <el-switch
-          v-model="isDark"
-          style="--el-switch-on-color:#18222c"
-      >
-        <template #active-action>
-          <el-icon>
-            <Moon/>
-          </el-icon>
-        </template>
-        <template #inactive-action>
-          <el-icon>
-            <Sunny color="#000"/>
-          </el-icon>
-        </template>
-      </el-switch>
-    </div>
-    <el-dropdown class="menu-item">
-      <div class="title">
-        <i class="el-icon el-tooltip__trigger" style="font-size: 24px;">
-          <svg preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24" width="1.2em" height="1.2em">
-            <path fill="currentColor"
-                  d="m18.5 10l4.4 11h-2.155l-1.201-3h-4.09l-1.199 3h-2.154L16.5 10h2zM10 2v2h6v2h-1.968a18.222 18.222 0 0 1-3.62 6.301a14.864 14.864 0 0 0 2.336 1.707l-.751 1.878A17.015 17.015 0 0 1 9 13.725a16.676 16.676 0 0 1-6.201 3.548l-.536-1.929a14.7 14.7 0 0 0 5.327-3.042A18.078 18.078 0 0 1 4.767 8h2.24A16.032 16.032 0 0 0 9 10.877a16.165 16.165 0 0 0 2.91-4.876L2 6V4h6V2h2zm7.5 10.885L16.253 16h2.492L17.5 12.885z"></path>
-          </svg>
-        </i>
-      </div>
+  <div class="account-tools">
+    <button type="button" class="icon-button" :aria-label="T(isDark ? 'Switch to light theme' : 'Switch to dark theme')"
+      :title="T(isDark ? 'Switch to light theme' : 'Switch to dark theme')" @click="toggleTheme">
+      <el-icon aria-hidden="true"><el-icon-sunny v-if="isDark" /><el-icon-moon v-else /></el-icon>
+    </button>
+    <el-dropdown trigger="click" @command="app.changeLang">
+      <button type="button" class="icon-button language-button" :aria-label="T('Change language')" :title="T('Change language')">
+        <span aria-hidden="true">Aa</span>
+      </button>
       <template #dropdown>
         <el-dropdown-menu>
-          <el-dropdown-item v-for="(v, k) in appStore.setting.langs" @click="changeLang(k)" :key="k">{{ v.name }}</el-dropdown-item>
+          <el-dropdown-item v-for="(value, key) in app.setting.langs" :key="key" :command="key">
+            <span class="language-choice"><span>{{ value.name }}</span><span v-if="key === app.setting.lang" aria-hidden="true">✓</span></span>
+          </el-dropdown-item>
         </el-dropdown-menu>
       </template>
     </el-dropdown>
-    <el-dropdown class="menu-item">
-      <div class="title">
-        <!--        <el-image class="avatar" :src="user.avatar"></el-image>-->
-        <span class="nickname">{{ user.username }}</span>
-        <el-icon>
-          <el-icon-arrow-down/>
-        </el-icon>
-
-      </div>
-
+    <el-dropdown trigger="click" @command="accountAction">
+      <button type="button" class="account-button" :aria-label="T('Account menu')">
+        <span class="account-initials" aria-hidden="true">{{ initials }}</span>
+        <span class="account-name">{{ user.username || user.nickname || T('Account') }}</span>
+        <el-icon aria-hidden="true"><el-icon-arrow-down /></el-icon>
+      </button>
       <template #dropdown>
         <el-dropdown-menu>
-          <el-dropdown-item @click="showChangePwd">{{ T('ChangePassword') }}</el-dropdown-item>
-          <el-dropdown-item @click="logout">{{ T('Logout') }}</el-dropdown-item>
+          <el-dropdown-item v-if="hasProfile" command="profile">{{ T('Userinfo') }}</el-dropdown-item>
+          <el-dropdown-item command="password">{{ T('ChangePassword') }}</el-dropdown-item>
+          <el-dropdown-item command="logout" divided>{{ T('Logout') }}</el-dropdown-item>
         </el-dropdown-menu>
       </template>
     </el-dropdown>
-    <changePwdDialog v-model:visible="changePwdVisible"></changePwdDialog>
+    <ChangePwdDialog v-model:visible="changePwdVisible" />
   </div>
 </template>
 
 <script setup>
-  import { useUserStore } from '@/store/user'
-  import { useAppStore } from '@/store/app'
-  import changePwdDialog from '@/components/changePwdDialog.vue'
-  import { ref } from 'vue'
-  import { T } from '@/utils/i18n'
-  import { useDark } from '@vueuse/core'
-  import { Sunny, Moon } from '@element-plus/icons'
-
-  const userStore = useUserStore()
-  const user = userStore
-  const appStore = useAppStore()
-
-  const logout = () => {
-    userStore.logout()
-    window.location.reload()
-  }
-
-  const changePwdVisible = ref(false)
-  const showChangePwd = () => {
-    changePwdVisible.value = true
-  }
-  const changeLang = (v) => {
-    appStore.changeLang(v)
-  }
-  const isDark = useDark()
-  // const toggleDark = useToggle(isDark)
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useUserStore } from '@/store/user'
+import { useAppStore } from '@/store/app'
+import { useRouteStore } from '@/store/router'
+import { permittedLeaves } from '@/utils/navigation'
+import { isDark, toggleTheme } from '@/utils/appearance'
+import { T } from '@/utils/i18n'
+import ChangePwdDialog from '@/components/changePwdDialog.vue'
+const router = useRouter()
+const user = useUserStore()
+const app = useAppStore()
+const routeStore = useRouteStore()
+const changePwdVisible = ref(false)
+const hasProfile = computed(() => permittedLeaves(routeStore.routes).some(route => route.name === 'MyInfo'))
+const initials = computed(() => (user.nickname || user.username || 'P').slice(0, 2).toUpperCase())
+function accountAction(command) {
+  if (command === 'profile') router.push({ name: 'MyInfo' })
+  if (command === 'password') changePwdVisible.value = true
+  if (command === 'logout') { user.logout(); window.location.reload() }
+}
 </script>
 
-<style lang="scss" scoped>
-.setting {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-
-  .menu-item {
-    margin-left: 15px;
-
-    * {
-      outline: none;
-    }
-  }
-
-  .title {
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-
-
-    .nickname {
-      padding: 0 10px;
-    }
-  }
-}
+<style scoped>
+.account-tools { display: flex; gap: 4px; align-items: center; flex: none; }
+.language-button { font-size: 14px; font-weight: 600; }
+.language-choice { display: flex; width: 130px; align-items: center; justify-content: space-between; gap: 12px; }
+.account-button { display: flex; align-items: center; gap: 8px; background: transparent; color: var(--prc-text); border: 0; border-radius: 6px; min-height: 36px; padding: 4px 6px; cursor: pointer; font-size: 13px; }
+.account-button:hover { background: var(--prc-hover); }
+.account-initials { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--prc-active); font-size: 11px; font-weight: 600; }
+.account-name { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-button .el-icon { font-size: 12px; }
+@media (max-width: 1100px) { .account-tools { justify-content: space-between; width: 100%; } .account-button { min-height: 44px; } }
 </style>

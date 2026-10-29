@@ -1,0 +1,55 @@
+name: Frontend verification
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PRC_CONTRACT_BASE: ${{ github.event.pull_request.base.sha || '3998c2a9213fcd047252776d0f0db33e6717026c' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install locked application dependencies
+        run: npm ci
+      - name: Verify preserved backend contracts
+        run: node scripts/verify-contracts.mjs
+      - name: Build production frontend
+        run: npm run build
+      - name: Install isolated browser verification tools
+        run: |
+          npm install --prefix "$RUNNER_TEMP/prc-ui-tools" --no-save --package-lock=false --ignore-scripts playwright@1.58.2
+          "$RUNNER_TEMP/prc-ui-tools/node_modules/.bin/playwright" install --with-deps chromium
+          printf 'PRC_PLAYWRIGHT_MODULE=%s\n' "$RUNNER_TEMP/prc-ui-tools/node_modules/playwright/index.mjs" >> "$GITHUB_ENV"
+      - name: Capture the original interface
+        continue-on-error: true
+        run: |
+          git worktree add --detach "$RUNNER_TEMP/prc-before" 3998c2a9213fcd047252776d0f0db33e6717026c
+          ln -s "$GITHUB_WORKSPACE/node_modules" "$RUNNER_TEMP/prc-before/node_modules"
+          npm --prefix "$RUNNER_TEMP/prc-before" run build
+          node scripts/verify-ui.mjs --baseline --dist="$RUNNER_TEMP/prc-before/dist"
+      - name: Verify navigation, responsive views, and sign-in
+        run: node scripts/verify-ui.mjs
+      - name: Save interface evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: praesto-remote-control-ui
+          path: ui-artifacts/
+          if-no-files-found: warn
+          retention-days: 7

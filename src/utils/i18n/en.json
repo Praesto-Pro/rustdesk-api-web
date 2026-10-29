@@ -1,12 +1,12 @@
 {
   "Login": {
-    "One": "Login"
+    "One": "Sign in"
   },
   "Logout": {
-    "One": "Logout"
+    "One": "Sign out"
   },
   "Register": {
-    "One": "Register"
+    "One": "Create account"
   },
   "Confirm": {
     "One": "Confirm"
@@ -18,7 +18,7 @@
     "One": "Password"
   },
   "LoginSuccess": {
-    "One": "Login Success"
+    "One": "Signed in"
   },
   "ForgotPassword": {
     "One": "Forgot Password"
@@ -27,10 +27,10 @@
     "One": "Reset Password"
   },
   "ChangePassword": {
-    "One": "Change Password"
+    "One": "Change password"
   },
   "Userinfo": {
-    "One": "User Info"
+    "One": "My account"
   },
   "ParamRequired": {
     "One": "{param} is required"
@@ -63,7 +63,7 @@
     "One": "Actions"
   },
   "Filter": {
-    "One": "Filter"
+    "One": "Apply filters"
   },
   "Add": {
     "One": "Add"
@@ -111,19 +111,19 @@
     "One": "Color"
   },
   "CreatedAt": {
-    "One": "Created At"
+    "One": "Created at"
   },
   "UpdatedAt": {
-    "One": "Updated At"
+    "One": "Updated at"
   },
   "Memory": {
     "One": "Memory"
   },
   "Os": {
-    "One": "Os"
+    "One": "OS"
   },
   "Uuid": {
-    "One": "Uuid"
+    "One": "UUID"
   },
   "Version": {
     "One": "Version"
@@ -192,7 +192,7 @@
     "One": "Device"
   },
   "ChangeLang": {
-    "One": "切换中文"
+    "One": "Change language"
   },
   "My": {
     "One": "My"
@@ -207,34 +207,34 @@
     "One": "System"
   },
   "PeerManage": {
-    "One": "Peers"
+    "One": "All devices"
   },
   "AddressBookManage": {
     "One": "Address Books"
   },
   "GroupManage": {
-    "One": "Groups"
+    "One": "User groups"
   },
   "UserManage": {
     "One": "Users"
   },
   "UserAdd": {
-    "One": "User Add"
+    "One": "Add user"
   },
   "UserEdit": {
-    "One": "User Edit"
+    "One": "Edit user"
   },
   "TagsManage": {
     "One": "Tags"
   },
   "OauthManage": {
-    "One": "Oauth"
+    "One": "Sign-in providers"
   },
   "LoginLog": {
-    "One": "Login Log"
+    "One": "Sign-in history"
   },
   "LastOnlineTime": {
-    "One": "Last Online Time"
+    "One": "Last seen"
   },
   "JustNow": {
     "One": "Just Now"
@@ -275,10 +275,10 @@
     "One": "Export"
   },
   "AddToAddressBook": {
-    "One": "Add To Address Book"
+    "One": "Add to address book"
   },
   "BatchDelete": {
-    "One": "Batch Delete"
+    "One": "Delete selected"
   },
   "PleaseSelectData": {
     "One": "Please select data"
@@ -340,7 +340,7 @@
     "One": "Key overuse"
   },
   "Link": {
-    "One": "Link"
+    "One": "Connect"
   },
   "CopySuccess": {
     "One": "Copy Success"
@@ -352,7 +352,7 @@
     "One": "Timeout"
   },
   "AuditConnLog": {
-    "One": "Connection Log"
+    "One": "Connection history"
   },
   "Peer": {
     "One": "Peer",
@@ -368,7 +368,7 @@
     "One": "Close Time"
   },
   "AuditFileLog": {
-    "One": "File Log"
+    "One": "File transfers"
   },
   "Common": {
     "One": "Common"
@@ -380,7 +380,7 @@
     "One": "Num"
   },
   "Ip": {
-    "One": "Ip"
+    "One": "IP"
   },
   "FileName": {
     "One": "File Name"
@@ -437,7 +437,7 @@
     "One": "\"My Address Book\" is the default of the system, cannot be modified or deleted"
   },
   "LastOnlineIp": {
-    "One": "Last Online Ip"
+    "One": "Last IP address"
   },
   "OldPassword": {
     "One": "Old Password"
@@ -458,7 +458,7 @@
     "One": "To Login"
   },
   "UserToken": {
-    "One": "User Token"
+    "One": "Access tokens"
   },
   "BatchAddToAB": {
     "One": "Batch Add To Address Book"
@@ -470,7 +470,7 @@
     "One": "User"
   },
   "ShareRecord": {
-    "One": "Share Record"
+    "One": "Shared links"
   },
   "Second": {
     "One": "Second"
@@ -479,7 +479,7 @@
     "One": "Captcha"
   },
   "ServerCmd": {
-    "One": "Server Cmd"
+    "One": "Server settings"
   },
   "Simple": {
     "One": "Simple"
@@ -515,7 +515,7 @@
     "One": "Result"
   },
   "DeviceGroupManage": {
-    "One": "Device Group Manage"
+    "One": "Device groups"
   },
   "Drop file here or click to upload": {
     "One": "Drop file here or click to upload"
@@ -531,5 +531,8 @@
   },
   "Remark": {
     "One": "Remark"
+  },
+  "MyPeer": {
+    "One": "My devices"
   }
 }
