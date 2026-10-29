@@ -42,7 +42,7 @@
           <el-button @click="toAdd">{{ T('Add device') }}</el-button>
           <el-button @click="toExport">{{ T('Export') }}</el-button>
           <el-button @click="showImport = true">{{ T('Import') }}</el-button>
-          <el-button :icon="Setting" @click="showColumnSetting">{{ T('Columns') }}</el-button>
+          <el-button v-if="!isCompact" :icon="Setting" @click="showColumnSetting">{{ T('Columns') }}</el-button>
         </div>
       </div>
       <div v-if="multipleSelection.length" class="selection-bar">
@@ -60,7 +60,30 @@
         <el-button @click="getList" :loading="listRes.loading">{{ T('Retry') }}</el-button>
       </div>
 
-      <div class="table-scroll" :aria-busy="listRes.loading">
+      <DeviceCards v-if="isCompact" v-model:selected="multipleSelection" :rows="listRes.list" :loading="listRes.loading"
+        :error="listRes.error" :has-filters="hasFilters" :last-seen="lastSeen" :last-seen-title="lastSeenTitle" @copy="copyDeviceId" @clear="clearFilters">
+        <template #actions="{ row }">
+            <div class="row-actions">
+              <el-button type="primary" size="small" @click="connectByClient(row.id)" :aria-label="T('Connect') + ' ' + row.id">{{ T('Connect') }}</el-button>
+              <el-button v-if="appStore.setting.appConfig.web_client && !isCompact" size="small" @click="toWebClientLink(row)">{{ T('Web client') }}</el-button>
+              <el-dropdown trigger="click">
+                <el-button size="small" :aria-label="T('More actions for') + ' ' + row.id">
+                  {{ T('More') }}<el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item v-if="appStore.setting.appConfig.web_client && isCompact" @click="toWebClientLink(row)">{{ T('Web client') }}</el-dropdown-item>
+                    <el-dropdown-item @click="toEdit(row)">{{ T('Edit') }}</el-dropdown-item>
+                    <el-dropdown-item @click="toAddressBook(row)">{{ T('AddToAddressBook') }}</el-dropdown-item>
+                    <el-dropdown-item divided @click="del(row)">{{ T('Delete') }}</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
+        </template>
+      </DeviceCards>
+
+      <div v-else class="table-scroll" :aria-busy="listRes.loading">
         <el-table :data="listRes.list" v-loading="listRes.loading" @selection-change="handleSelectionChange" :aria-label="T('Device inventory')">
           <el-table-column type="selection" width="44" align="center" />
           <template v-for="c in visibleColumns.filter(cc => cc.visible)" :key="c.name">
@@ -639,7 +662,11 @@
 
   const isCompact = ref(false)
   const viewportQuery = window.matchMedia('(max-width: 767px)')
-  const updateViewport = () => { isCompact.value = viewportQuery.matches }
+  const updateViewport = () => {
+    if (isCompact.value !== viewportQuery.matches) multipleSelection.value = []
+    isCompact.value = viewportQuery.matches
+  }
+  watch(() => listRes.list, () => { multipleSelection.value = [] })
   updateViewport()
   onMounted(() => viewportQuery.addEventListener('change', updateViewport))
   onBeforeUnmount(() => viewportQuery.removeEventListener('change', updateViewport))

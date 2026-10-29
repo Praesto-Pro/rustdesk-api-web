@@ -20,7 +20,7 @@ This change modernizes the existing Vue 3 / Element Plus frontend. It does not m
 | Unsupported regional language values such as en-US leak raw translation keys. | Normalize supported locales and fall back to English when a translation is missing. |
 | The settings UI removes focus outlines and uses non-button click targets. | Use semantic controls, accessible names, visible focus, and a skip link. |
 | Authentication lacks robust busy/failure states. | Improve form submission, loading, CAPTCHA retry, provider options, and error presentation while preserving existing API calls. |
-| Device tables reserve excessive width for many competing actions. | Keep Connect visible and move secondary actions into a compact menu; preserve existing operations. |
+| Device tables reserve excessive width for many competing actions. | Keep Connect visible and move secondary actions into a compact menu; use a readable device list with selectable rows and expandable technical details on phones. |
 | Account forms and dialogs use fixed widths. | Constrain dialogs to the viewport and make account/form layouts responsive. |
 
 ## Design decisions
@@ -60,7 +60,7 @@ The browser runner serves only the built static frontend and intercepts API call
 
 The baseline production build uses the original commit and the same locked dependency tree. The modernization build uses the proposed changes. Build and browser results are reported on the pull request; screenshots are retained as workflow artifacts.
 
-The first verification run passed the production build, contract comparison, and all 14 browser scenarios. Visual review compared the original desktop device view with the new desktop workspace, mobile drawer, and sign-in screen. Follow-up verification additionally covers the hash-router skip link, existing translated navigation labels, restricted-account landing pages, registration payloads, and automatic SSO independent of password CAPTCHA.
+Verification passed the production build, contract comparison, and 19 browser scenarios before the final mobile visual correction. Visual review compared the original desktop device view with the new desktop workspace, mobile drawer, and sign-in screen. The expanded suite covers the hash-router skip link, existing translated navigation labels, restricted-account landing pages, registration payloads, and automatic SSO independent of password CAPTCHA. Visual review also caught fixed table actions obscuring device names on phones; the final phone layout uses selectable device cards with complete names, IDs, actions, and expandable technical details.
 
 These checks exercise frontend behavior against known contracts. They do not establish live backend availability, a successful real OIDC provider round trip, or an actual remote-control session.
 

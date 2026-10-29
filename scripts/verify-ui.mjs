@@ -175,7 +175,7 @@ const cleanScenario = scenario => {
   assert.deepEqual(scenario.errors, [], 'No unhandled browser errors')
 }
 async function devicesReady(page) {
-  await visible(page.locator('.el-table__row').filter({ hasText: 'Design MacBook' }).first())
+  await visible(page.locator('.el-table__row, .device-card').filter({ hasText: 'Design MacBook' }).first())
 }
 async function waitForRoute(page, pathname) {
   await page.waitForFunction(expected => window.location.hash.split('?')[0] === '#' + expected, pathname)
@@ -342,6 +342,28 @@ try {
         await waitForRoute(page, '/my/peer')
       })
     }
+
+    await check('Phone device cards keep identity, selection, details, and actions accessible', async () => {
+      await devicesReady(page)
+      const card = page.getByRole('article', { name: 'Design MacBook', exact: true })
+      await visible(card)
+      const heading = card.getByRole('heading', { name: 'Design MacBook', exact: true })
+      assert.equal(await heading.evaluate(element => element.scrollWidth <= element.clientWidth + 1), true)
+      await visible(card.getByText('901234567', { exact: true }))
+      const selection = card.getByRole('checkbox', { name: 'Select device 901234567', exact: true })
+      await selection.check()
+      await visible(page.getByText('1 selected', { exact: true }))
+      await selection.uncheck()
+      await card.locator('summary').click()
+      await visible(card.getByText('Apple M3', { exact: true }))
+      await card.getByRole('button', { name: 'More actions for 901234567', exact: true }).click()
+      await page.getByRole('menuitem', { name: 'View', exact: true }).click()
+      const dialog = page.getByRole('dialog')
+      await visible(dialog)
+      await hasNoPageOverflow(page)
+      await page.keyboard.press('Escape')
+      await hidden(dialog)
+    })
 
     await check('Limited permissions hide administrative navigation and search results', async () => {
       const limited = await fixtureContext({ limited: true })
