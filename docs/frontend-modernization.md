@@ -39,7 +39,7 @@ The route configuration is unchanged. All page links use the existing named rout
 
 The presentation layer consumes `useRouteStore().routes` after the existing backend permission filtering. Hidden routes and empty groups are excluded from navigation and search. Parameterized user-edit routes remain accessible through their existing workflows and highlight the Users destination.
 
-The legacy root route remains the account page, preserving bookmarks and authentication redirect behavior. The Praesto wordmark links to an available device destination when the account has one.
+The legacy root route remains the account page, preserving bookmarks. Explicit authorized sign-in return destinations retain their query strings. Accounts without access to the account page land on an available permitted page. The Praesto wordmark links to an available device destination when the account has one.
 
 ## Contracts preserved
 
@@ -60,10 +60,12 @@ The browser runner serves only the built static frontend and intercepts API call
 
 The baseline production build uses the original commit and the same locked dependency tree. The modernization build uses the proposed changes. Build and browser results are reported on the pull request; screenshots are retained as workflow artifacts.
 
+The first verification run passed the production build, contract comparison, and all 14 browser scenarios. Visual review compared the original desktop device view with the new desktop workspace, mobile drawer, and sign-in screen. Follow-up verification additionally covers the hash-router skip link, existing translated navigation labels, restricted-account landing pages, registration payloads, and automatic SSO independent of password CAPTCHA.
+
 These checks exercise frontend behavior against known contracts. They do not establish live backend availability, a successful real OIDC provider round trip, or an actual remote-control session.
 
 ## Follow-up observations outside this UI change
 
 The original user store logs the login response; the account view renders server-provided Markdown as HTML; logout clears application state through a full reload. These deserve a separate authentication/content-hardening review. They were not expanded into a backend or authentication redesign here.
 
-Dependency upgrades should be reviewed separately with their release notes and security impact. Retaining the current lockfile isolates this UI change from dependency migration risk.
+The locked application install reports 25 dependency advisories (1 low, 6 moderate, 16 high, 2 critical), and the production build retains an existing large-chunk warning. These are observed baseline findings, not a determination that each advisory is exploitable in production. Dependency upgrades and bundle splitting should be reviewed separately; retaining the lockfile isolates this UI change from dependency migration risk. Browser verification tools are installed in a separate temporary directory so they cannot alter the application dependency tree.

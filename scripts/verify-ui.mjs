@@ -3,7 +3,8 @@ import { createServer } from 'node:http'
 import { readFile, writeFile, mkdir, stat } from 'node:fs/promises'
 import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
-import { chromium } from 'playwright'
+import { pathToFileURL } from 'node:url'
+const { chromium } = await import(process.env.PRC_PLAYWRIGHT_MODULE ? pathToFileURL(process.env.PRC_PLAYWRIGHT_MODULE).href : 'playwright')
 
 // Synthetic fixtures only. No live backend or remote session is contacted.
 const baseline = process.argv.includes('--baseline')
@@ -55,14 +56,14 @@ const peers = [
 ]
 const limitedRoutes = ['MyInfo', 'MyPeer', 'MyAddressBookCollection', 'MyAddressBookList', 'MyTagList', 'MyShareRecordList', 'MyLoginLog']
 
-async function fixtureContext({ authenticated = true, limited = false, viewport = { width: 1440, height: 900 }, options = {} } = {}) {
+async function fixtureContext({ authenticated = true, limited = false, permissions = null, viewport = { width: 1440, height: 900 }, options = {} } = {}) {
   const context = await browser.newContext({ viewport, locale: 'en-US', colorScheme: 'light', reducedMotion: 'reduce', serviceWorkers: 'block' })
   contexts.push(context)
   const scenario = {
     options: { ops: ['google'], auto_oidc: false, disable_pwd: false, register: true, need_captcha: false, ...options },
     requests: [], unexpected: [], errors: [], peerMode: 'normal', requireCaptchaOnce: false,
   }
-  const user = { id: 1, username: 'Preview Operator', nickname: 'Preview Operator', email: 'operator@example.test', token: fixtureToken, role: limited ? 'user' : 'admin', route_names: limited ? limitedRoutes : ['*'] }
+  const user = { id: 1, username: 'Preview Operator', nickname: 'Preview Operator', email: 'operator@example.test', token: fixtureToken, role: limited ? 'user' : 'admin', route_names: permissions || (limited ? limitedRoutes : ['*']) }
   await context.addInitScript(({ authenticated, token }) => {
     localStorage.setItem('lang', 'en')
     if (authenticated && !sessionStorage.getItem('prc-seeded')) {
@@ -186,7 +187,7 @@ try {
     const { page, scenario } = await fixtureContext()
     await page.goto(origin + '/#/my/peer')
     await devicesReady(page)
-    await screenshot(page, 'before-desktop-devices', true)
+    await screenshot(page, 'before-desktop-devices')
     await page.setViewportSize({ width: 768, height: 1024 })
     await screenshot(page, 'before-tablet-devices')
     await page.setViewportSize({ width: 390, height: 844 })
@@ -214,6 +215,14 @@ try {
       assert.equal(await routeLink(page, '/my/peer').getAttribute('aria-current'), 'page')
       await hasNoPageOverflow(page)
       await screenshot(page, 'after-desktop-devices', true)
+    })
+
+    await check('Skip link focuses content without changing the hash route', async () => {
+      const before = page.url()
+      await page.getByRole('link', { name: 'Skip to content', exact: true }).focus()
+      await page.keyboard.press('Enter')
+      assert.equal(page.url(), before)
+      assert.equal(await page.locator('#main-content').evaluate(element => element === document.activeElement), true)
     })
 
     await check('Device details retain a working accessible dialog', async () => {
@@ -287,10 +296,21 @@ try {
       await devicesReady(page)
     })
 
+    await check('Language switching preserves translated navigation destinations', async () => {
+      await page.getByRole('button', { name: 'Change language', exact: true }).click()
+      await page.getByRole('menuitem', { name: 'Français', exact: true }).click()
+      await visible(routeLink(page, '/my/peer').filter({ hasText: 'Mon appareil' }))
+      assert.equal(await page.locator('h1').first().innerText(), 'Mon appareil')
+      assert.equal(await routeLink(page, '/user/index').innerText(), 'Utilisateurs')
+      await page.getByRole('button', { name: 'Change language', exact: true }).click()
+      await page.getByRole('menuitem', { name: /English/ }).click()
+      assert.equal(await page.locator('h1').first().innerText(), 'My devices')
+    })
+
     await check('Theme toggle persists and keeps readable application content', async () => {
       await page.getByRole('button', { name: 'Switch to dark theme', exact: true }).click()
       await visible(page.getByRole('button', { name: 'Switch to light theme', exact: true }))
-      await screenshot(page, 'after-desktop-dark')
+      await screenshot(page, 'after-desktop-dark', true)
       await page.reload()
       await devicesReady(page)
       await visible(page.getByRole('button', { name: 'Switch to light theme', exact: true }))
@@ -303,7 +323,7 @@ try {
         const opener = page.getByRole('button', { name: 'Open navigation', exact: true })
         await visible(opener)
         await hasNoPageOverflow(page)
-        await screenshot(page, 'after-' + viewport.width + '-devices')
+        await screenshot(page, 'after-' + viewport.width + '-devices', viewport.width === 390)
         await opener.click()
         await visible(routeLink(page, '/my/peer'))
         if (viewport.width === 390) await screenshot(page, 'after-mobile-navigation', true)
@@ -408,6 +428,47 @@ try {
       assert.equal(callback.query.uuid, '')
       assert.equal(await auth.page.evaluate(() => localStorage.getItem('oidc_code')), null)
       assert.equal(await auth.page.evaluate(() => localStorage.getItem('access_token')), fixtureToken)
+      cleanScenario(auth.scenario)
+      await auth.context.close()
+    })
+    await check('Sign-in selects an authorized landing page and preserves explicit return queries', async () => {
+      for (const redirect of ['', '/my/peer?id=901234567']) {
+        const auth = await fixtureContext({ authenticated: false, permissions: ['MyPeer'] })
+        await auth.page.goto(origin + '/#/login' + (redirect ? '?redirect=' + encodeURIComponent(redirect) : ''))
+        await auth.page.getByLabel('Username', { exact: true }).fill('preview.operator')
+        await auth.page.getByLabel('Password', { exact: true }).fill('fixture-password')
+        await auth.page.getByRole('button', { name: 'Sign in', exact: true }).click()
+        await waitForRoute(auth.page, '/my/peer')
+        assert.equal(new URL(auth.page.url()).hash, '#' + (redirect || '/my/peer'))
+        await devicesReady(auth.page)
+        cleanScenario(auth.scenario)
+        await auth.context.close()
+      }
+    })
+
+    await check('Registration retains its payload and uses an authorized landing page', async () => {
+      const auth = await fixtureContext({ authenticated: false, permissions: ['MyPeer'] })
+      await auth.page.goto(origin + '/#/register')
+      await auth.page.getByLabel('Username', { exact: true }).fill('preview.operator')
+      await auth.page.getByLabel('Email', { exact: true }).fill('operator@example.test')
+      await auth.page.getByLabel('Password', { exact: true }).fill('fixture-password')
+      await auth.page.getByLabel('Confirm Password', { exact: true }).fill('fixture-password')
+      await auth.page.getByRole('button', { name: 'Create account', exact: true }).click()
+      await waitForRoute(auth.page, '/my/peer')
+      const request = auth.scenario.requests.find(item => item.endpoint === '/user/register')
+      assert.equal(request.method, 'POST')
+      assert.deepEqual(request.body, { username: 'preview.operator', email: 'operator@example.test', password: 'fixture-password', confirm_password: 'fixture-password' })
+      await devicesReady(auth.page)
+      cleanScenario(auth.scenario)
+      await auth.context.close()
+    })
+
+    await check('Automatic SSO is independent of password-only captcha options', async () => {
+      const auth = await fixtureContext({ authenticated: false, options: { disable_pwd: true, register: false, need_captcha: true, auto_oidc: true } })
+      await auth.page.goto(origin + '/#/login')
+      await waitForRoute(auth.page, '/')
+      assert.equal(auth.scenario.requests.filter(request => request.endpoint === '/captcha').length, 0)
+      assert.equal(auth.scenario.requests.filter(request => request.endpoint === '/oidc/auth').length, 1)
       cleanScenario(auth.scenario)
       await auth.context.close()
     })

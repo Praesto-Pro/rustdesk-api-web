@@ -104,3 +104,13 @@ export function defaultDestination(routes = []) {
   const destination = preferred.map(name => leaves.find(route => route.name === name)).find(Boolean) || leaves[0]
   return destination ? { name: destination.name } : null
 }
+
+export function postAuthenticationDestination(router, routes, redirect) {
+  if (typeof redirect === 'string' && redirect.startsWith('/') && !redirect.startsWith('//')) {
+    const resolved = router.resolve(redirect)
+    // Only named, authorized application routes are valid return destinations.
+    if (resolved.name && !resolved.matched.at(-1)?.redirect && !['Login', 'Register'].includes(resolved.name)) return redirect
+  }
+  if (permittedLeaves(routes).some(route => route.name === 'MyInfo')) return { name: 'MyInfo' }
+  return defaultDestination(routes) || '/404'
+}

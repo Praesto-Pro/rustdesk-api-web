@@ -28,10 +28,13 @@ import BrandMark from '@/components/BrandMark.vue'
 import { T } from '@/utils/i18n'
 import { register } from '@/api/user'
 import { useUserStore } from '@/store/user'
+import { useRouteStore } from '@/store/router'
+import { postAuthenticationDestination } from '@/utils/navigation'
 import { useAppStore } from '@/store/app'
 import '@/styles/auth.scss'
 const router = useRouter()
 const userStore = useUserStore()
+const routeStore = useRouteStore()
 const appStore = useAppStore()
 const formRef = ref(null)
 const submitting = ref(false)
@@ -59,7 +62,7 @@ const submit = async () => {
     userStore.saveUserData(res.data)
     appStore.loadConfig()
     ElMessage.success(T('OperationSuccess'))
-    await router.push('/')
+    await router.push(postAuthenticationDestination(router, routeStore.routes))
   } catch {
     submitError.value = T('Your account could not be created. Check your details and try again.')
   } finally {

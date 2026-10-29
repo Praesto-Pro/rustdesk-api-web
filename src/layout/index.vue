@@ -1,7 +1,7 @@
 <template>
   <div class="app-shell" :class="{ 'is-collapsed': !isMobile && app.setting.sideIsCollapse }"
     :style="{ '--prc-sidebar-width': app.setting.sideIsCollapse ? '68px' : '240px' }">
-    <a class="skip-link" href="#main-content">{{ T('Skip to content') }}</a>
+    <a class="skip-link" href="#main-content" @click.prevent="focusMainContent">{{ T('Skip to content') }}</a>
     <aside v-if="!isMobile" class="app-sidebar"><GAside :compact="app.setting.sideIsCollapse" /></aside>
     <div class="app-workspace">
       <header class="app-header"><GHeader :mobile="isMobile" :navigation-open="navigationOpen" @toggle-navigation="toggleNavigation" @search="searchOpen = true" /></header>
@@ -50,6 +50,10 @@ const mainContent = ref(null)
 let navigationTrigger = null
 let navigatedFromDrawer = false
 const context = computed(() => navigationContext(route, buildNavigation(routeStore.routes)))
+function focusMainContent() {
+  mainContent.value?.focus({ preventScroll: true })
+  mainContent.value?.scrollTo({ top: 0 })
+}
 function toggleNavigation(event) {
   if (isMobile.value) {
     navigationTrigger = event?.currentTarget

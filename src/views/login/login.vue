@@ -54,6 +54,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import BrandMark from '@/components/BrandMark.vue'
 import { useUserStore } from '@/store/user'
+import { useRouteStore } from '@/store/router'
+import { postAuthenticationDestination } from '@/utils/navigation'
 import { T } from '@/utils/i18n'
 import { loginOptions, captcha } from '@/api/login'
 import { getCode, removeCode } from '@/utils/auth'
@@ -63,6 +65,7 @@ import oidcImage from '@/assets/oidc.png'
 import '@/styles/auth.scss'
 
 const userStore = useUserStore()
+const routeStore = useRouteStore()
 const route = useRoute()
 const router = useRouter()
 const formRef = ref(null)
@@ -100,8 +103,7 @@ const rules = computed(() => ({
 }))
 const completeSignIn = async () => {
   ElMessage.success(T('LoginSuccess'))
-  const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
-  await router.replace(redirect || '/')
+  await router.replace(postAuthenticationDestination(router, routeStore.routes, route.query.redirect))
 }
 const login = async () => {
   if (signingIn.value || pendingProvider.value || disablePwd.value || !optionsReady.value || captchaLoading.value) return
@@ -165,7 +167,7 @@ const loadLoginOptions = async (autoLogin = true) => {
     allowRegister.value = !!res.data.register
     captchaRequired.value = !!res.data.need_captcha
     optionsReady.value = true
-    if (captchaRequired.value) await loadCaptcha()
+    if (captchaRequired.value && !disablePwd.value) void loadCaptcha()
     if (autoLogin && res.data.auto_oidc && res.data.ops.length) await handleOIDCLogin(res.data.ops[0])
   } catch {
     optionsReady.value = false

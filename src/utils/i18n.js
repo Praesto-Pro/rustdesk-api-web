@@ -16,10 +16,40 @@ const trans = {
   'es': es,
   'zh-TW': zhTW,
 }
+// Reuse the existing locale vocabulary for the new contextual English labels.
+const existingTranslationKeys = {
+  "My devices": "MyPeer",
+  "My connections": "AddressBooks",
+  "My address books": "AddressBookName",
+  "My tags": "Tags",
+  "My shared links": "ShareRecord",
+  "All devices": "PeerManage",
+  "Device groups": "DeviceGroupManage",
+  "All connections": "AddressBookManage",
+  "All address books": "AddressBookNameManage",
+  "All tags": "TagsManage",
+  "Connection history": "AuditConnLog",
+  "File transfers": "AuditFileLog",
+  "Sign-in history": "LoginLog",
+  "Shared links": "ShareRecord",
+  "My sign-ins": "LoginLog",
+  "Users": "UserManage",
+  "User groups": "GroupManage",
+  "Sign-in providers": "OauthManage",
+  "Access tokens": "UserToken",
+  "Server settings": "ServerCmd",
+  "My account": "Userinfo",
+  "Sign in": "Login",
+  "Create account": "Register",
+  "Create an account": "Register",
+  "Connect": "Link",
+  "View": "Info"
+}
+
 export function T (key, params = {}, num = 0) {
   const appStore = useAppStore()
   const lang = appStore.setting.lang
-  const tran = trans[lang]?.[key] || en[key]
+  const tran = trans[lang]?.[key] || (lang !== 'en' && trans[lang]?.[existingTranslationKeys[key]]) || en[key]
   if (!tran) {
     return key
   }
