@@ -27,6 +27,7 @@
       <details class="device-card__details">
         <summary>{{ T('Technical details') }}</summary>
         <dl>
+          <dt v-if="groups">{{ T('Group') }}</dt><dd v-if="groups">{{ groupName(row) }}</dd>
           <template v-for="field in detailFields" :key="field.key">
             <dt>{{ T(field.label) }}</dt><dd>{{ row[field.key] ?? '—' }}</dd>
           </template>
@@ -52,6 +53,7 @@ import { T } from '@/utils/i18n'
 const props = defineProps({
   rows: { type: Array, required: true },
   selected: { type: Array, default: () => [] },
+  groups: Array,
   loading: Boolean,
   error: Boolean,
   hasFilters: Boolean,
@@ -60,6 +62,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:selected', 'copy', 'clear'])
 const keyOf = row => row.row_id ?? row.uuid ?? row.id
+const groupName = row => row.group_id ? (props.groups?.find(group => group.id === row.group_id)?.name || row.group_id) : '—'
 const isSelected = row => props.selected.some(item => keyOf(item) === keyOf(row))
 const selectedCount = computed(() => props.rows.filter(isSelected).length)
 const allSelected = computed(() => props.rows.length > 0 && selectedCount.value === props.rows.length)

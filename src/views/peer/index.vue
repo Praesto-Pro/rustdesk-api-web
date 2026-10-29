@@ -60,7 +60,7 @@
         <el-button @click="getList" :loading="listRes.loading">{{ T('Retry') }}</el-button>
       </div>
 
-      <DeviceCards v-if="isCompact" v-model:selected="multipleSelection" :rows="listRes.list" :loading="listRes.loading"
+      <DeviceCards v-if="isCompact" v-model:selected="multipleSelection" :rows="listRes.list" :groups="groupListRes.list" :loading="listRes.loading"
         :error="listRes.error" :has-filters="hasFilters" :last-seen="lastSeen" :last-seen-title="lastSeenTitle" @copy="copyDeviceId" @clear="clearFilters">
         <template #actions="{ row }">
             <div class="row-actions">
@@ -293,6 +293,7 @@
 </template>
 
 <script setup>
+  import DeviceCards from '@/components/DeviceCards.vue'
   import { computed, onActivated, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
   import { batchRemove, create, list, remove, update } from '@/api/peer'
   import { list as groupList } from '@/api/device_group'
