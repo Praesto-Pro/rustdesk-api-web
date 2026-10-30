@@ -4,6 +4,7 @@ import { readFile, writeFile, mkdir, stat } from 'node:fs/promises'
 import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
+import { gzipSync } from 'node:zlib'
 const { chromium } = await import(process.env.PRC_PLAYWRIGHT_MODULE ? pathToFileURL(process.env.PRC_PLAYWRIGHT_MODULE).href : 'playwright')
 
 // Synthetic fixtures only. No live backend or remote session is contacted.
@@ -88,7 +89,7 @@ async function fixtureContext({ authenticated = true, limited = false, permissio
     const reply = (data, code = 0, message = '') => route.fulfill({
       status: 200, contentType: 'application/json', body: JSON.stringify({ code, data, message }),
     })
-    if (endpoint === '/config/admin') return reply({ title: 'Rustdesk API Admin', hello: '' })
+    if (endpoint === '/config/admin') return reply({ title: 'Rustdesk API Admin', hello: scenario.options.hello || '' })
     if (endpoint === '/config/app') return reply({ web_client: 1 })
     if (endpoint === '/config/server') return reply({ id_server: 'rendezvous.example.test', key: '', relay_server: 'relay.example.test', api_server: origin })
     if (endpoint === '/user/current') return reply(user)
@@ -148,6 +149,7 @@ async function screenshot(page, name, inline = false) {
 }
 
 async function check(name, run) {
+  if (process.argv.includes('--measure-only') && !name.startsWith('Measure cold')) return
   try {
     await run()
     results.push({ name, status: 'passed' })
@@ -505,6 +507,65 @@ try {
       assert.equal(auth.scenario.requests.filter(request => request.endpoint === '/oidc/auth').length, 1)
       cleanScenario(auth.scenario)
       await auth.context.close()
+    })
+    await check('Administrator Markdown preserves formatting and removes active HTML', async () => {
+      const auth = await fixtureContext({ options: { hello: '**Safe heading** <img src="data:image/png;base64," onerror="window.xssExecuted=true"><script>window.xssExecuted=true</script><a href="javascript:alert(1)">Unsafe</a>' } })
+      await auth.page.goto(origin + '/#/')
+      await visible(auth.page.locator('.account-message strong'))
+      assert.equal(await auth.page.locator('.account-message strong').textContent(), 'Safe heading')
+      assert.equal(await auth.page.locator('.account-message script, .account-message [onerror], .account-message a[href^="javascript:"]').count(), 0)
+      assert.equal(await auth.page.evaluate(() => window.xssExecuted), undefined)
+      cleanScenario(auth.scenario)
+      await auth.context.close()
+    })
+    await check('An account with zero permissions loads its session only once', async () => {
+      const auth = await fixtureContext({ permissions: [] })
+      await auth.page.goto(origin + '/#/')
+      await visible(auth.page.locator('body'))
+      await auth.page.waitForTimeout(500)
+      assert.equal(auth.scenario.requests.filter(item => item.endpoint === '/user/current').length, 1)
+      cleanScenario(auth.scenario)
+      await auth.context.close()
+    })
+    await check('Logout clears both browser tokens and cached identity', async () => {
+      const auth = await fixtureContext()
+      await auth.page.goto(origin + '/#/my/peer')
+      await devicesReady(auth.page)
+      await auth.page.evaluate(() => {
+        localStorage.setItem('wc-option:local:access_token', 'stale-webclient-token')
+        localStorage.setItem('user_info', '{"name":"cached identity"}')
+      })
+      await auth.page.getByRole('button', { name: 'Account menu', exact: true }).click()
+      await auth.page.getByRole('menuitem', { name: /sign out/i }).click()
+      await waitForRoute(auth.page, '/login')
+      for (const key of ['access_token', 'wc-option:local:access_token', 'user_info', 'oidc_code', 'oidc_code_expiry']) {
+        assert.equal(await auth.page.evaluate(key => localStorage.getItem(key), key), null)
+      }
+      cleanScenario(auth.scenario)
+      await auth.context.close()
+    })
+    await check('Measure cold sign-in and device-page assets', async () => {
+      const measurements = []
+      for (const [label, authenticated, route] of [['sign-in', false, '/login'], ['devices', true, '/my/peer']]) {
+        const auth = await fixtureContext({ authenticated })
+        const assets = new Set()
+        auth.page.on('request', request => {
+          const url = new URL(request.url())
+          if (url.origin === origin && /\.(js|css)$/.test(url.pathname)) assets.add(url.pathname)
+        })
+        await auth.page.goto(origin + '/#' + route)
+        await auth.page.waitForLoadState('networkidle')
+        let rawBytes = 0, gzipBytes = 0
+        for (const asset of assets) {
+          const body = await readFile(path.join(dist, asset))
+          rawBytes += body.length
+          gzipBytes += gzipSync(body, { level: 9 }).length
+        }
+        measurements.push({ label, rawBytes, gzipBytes, assets: [...assets].sort() })
+        cleanScenario(auth.scenario)
+        await auth.context.close()
+      }
+      await writeFile(path.join(output, 'route-assets.json'), JSON.stringify({ dist, measurements, note: 'Cold-context JS/CSS requests; deterministic per-file gzip level 9, not network latency.' }, null, 2))
     })
     await check('Browser errors and unexpected network activity', async () => cleanScenario(scenario))
   }

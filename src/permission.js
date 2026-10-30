@@ -33,7 +33,7 @@ router.beforeEach(async (to, from, next) => {
 
     const userStore = useUserStore(pinia)
 
-    if (!userStore.route_names.length) {
+    if (!userStore.sessionLoaded) {
       const info = await userStore.info()
       if (!info) {
         userStore.logout()

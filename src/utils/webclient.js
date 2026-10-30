@@ -1,6 +1,4 @@
-import Websock from '@/utils/webclient/websock'
-import * as rendezvous from '@/utils/webclient/rendezvous'
-import * as message from '@/utils/webclient/message'
+import { httpUrl } from '@/utils/safe-url'
 import { ElMessageBox } from 'element-plus'
 import { T } from '@/utils/i18n'
 import { useAppStore } from '@/store/app'
@@ -11,11 +9,17 @@ const app = useAppStore()
 
 export const toWebClientLink = (row) => {
   //v2
-  console.log(app.setting.rustdeskConfig)
-  window.open(`${app.setting.rustdeskConfig.api_server}/webclient2/#/${row.id}`)
+  const url = httpUrl(`${app.setting.rustdeskConfig.api_server}/webclient2/`)
+  url.hash = `/${encodeURIComponent(String(row.id))}`
+  window.open(url.href, '_blank', 'noopener,noreferrer')
 }
 
 export async function getPeerSlat (id) {
+  const [{ default: Websock }, rendezvous, message] = await Promise.all([
+    import('@/utils/webclient/websock'),
+    import('@/utils/webclient/rendezvous'),
+    import('@/utils/webclient/message'),
+  ])
   const [addr, port] = app.setting.rustdeskConfig.id_server.split(':')
   if (!addr) {
     return
@@ -94,5 +98,7 @@ export async function getPeerSlat (id) {
 }
 
 export function getV2ShareUrl (token) {
-  return `${app.setting.rustdeskConfig.api_server}/webclient2/#/?share_token=${token}`
+  const url = httpUrl(`${app.setting.rustdeskConfig.api_server}/webclient2/`)
+  url.hash = `/?share_token=${encodeURIComponent(String(token))}`
+  return url.href
 }
