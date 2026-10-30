@@ -3,6 +3,8 @@ import * as path from 'path'
 import * as dotenv from 'dotenv'
 import * as fs from 'fs'
 import vue from '@vitejs/plugin-vue'
+import Components from 'unplugin-vue-components/vite'
+import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 
 const NODE_ENV = process.env.NODE_ENV || 'development'
 const envFile = `.env.${NODE_ENV}`
@@ -39,24 +41,6 @@ const conf = {
     outDir: 'dist', // 产出目录
     rollupOptions: {
       output: {
-        manualChunks (id) {
-          if (id.includes('node_modules')) {
-            const arr = id.toString().split('node_modules/')[1].split('/')
-            switch (arr[0]) {
-              case '@popperjs':
-              case '@vue':
-              case 'axios':
-              case 'element-plus':
-              case '@element-plus':
-                return '_' + arr[0]
-              default :
-                return '__vendor'
-            }
-          }else if(id.includes('Gwen-admin/src')){
-            //src 下的都打包到一起 不然很多小文件
-            return 'gwen'
-          }
-        },
         chunkFileNames: 'static/chunk/[name]-[hash].js',
         entryFileNames: 'static/entry/[name]-[hash].js',
         assetFileNames: 'static/[ext]/[name]-[hash].[ext]'
@@ -75,6 +59,7 @@ const conf = {
   },
   plugins: [
     vue(),
+    Components({ dts: false, resolvers: [ElementPlusResolver()] }),
   ],
 }
 
