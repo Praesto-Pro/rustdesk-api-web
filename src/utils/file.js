@@ -34,11 +34,17 @@ export function b64_to_utf8 (str) {
 }
 
 export function jsonToCsv (data) {
+  if (!data.length) return new Blob([], { type: 'text/csv' })
+  const cell = value => {
+    let text = String(value ?? '')
+    if (/^[\s\u0000-\u001f]*[=+@-]/.test(text) || /^[\t\r\n]/.test(text)) text = "'" + text
+    return '"' + text.replaceAll('"', '""') + '"'
+  }
   let csv = ''
   let keys = Object.keys(data[0])
-  csv += keys.join(',') + '\n'
+  csv += keys.map(cell).join(',') + '\r\n'
   data.forEach(row => {
-    csv += keys.map(key => `"${row[key].toString().replaceAll('"', '""')}"`).join(',') + '\n'
+    csv += keys.map(key => cell(row[key])).join(',') + '\r\n'
   })
   return new Blob([csv], { type: 'text/csv' })
 }

@@ -1,8 +1,10 @@
 import { createApp } from 'vue'
-import 'element-plus/dist/index.css'
+import { ElLoading } from 'element-plus'
+import 'element-plus/es/components/loading/style/css'
+import 'element-plus/es/components/message/style/css'
+import 'element-plus/es/components/message-box/style/css'
+import 'element-plus/es/components/notification/style/css'
 import App from './App.vue'
-import ElementPlus from 'element-plus'
-import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { router } from '@/router'
 import 'normalize.css/normalize.css'
 import { pinia } from '@/store'
@@ -12,7 +14,7 @@ import '@/styles/style.scss'
 import * as ElementIcons from '@element-plus/icons'
 
 const app = createApp(App)
-app.use(ElementPlus, { locale: zhCn })
+app.use(ElLoading)
 app.use(pinia)
 app.use(router)
 for (let icon in ElementIcons){

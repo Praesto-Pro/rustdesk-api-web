@@ -37,6 +37,8 @@
 import { computed, ref } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
+import { httpUrl } from '@/utils/safe-url'
 import changePwdDialog from '@/components/changePwdDialog.vue'
 import { useUserStore } from '@/store/user'
 import { useAppStore } from '@/store/app'
@@ -71,7 +73,7 @@ const toBind = async (row) => {
   try {
     const res = await bind({ op: row.op })
     if (!res?.data?.url) throw new Error('Missing authorization URL')
-    window.open(res.data.url)
+    window.open(httpUrl(res.data.url).href, '_blank', 'noopener,noreferrer')
   } catch { providerActionError.value = T('The provider could not be connected. Try again.') }
   finally { busyProvider.value = '' }
 }
@@ -91,7 +93,7 @@ const toUnBind = async (row) => {
   finally { busyProvider.value = '' }
 }
 const hasAdminMessage = computed(() => typeof appStore.setting.hello === 'string' && !!appStore.setting.hello.trim())
-const html = computed(() => marked(appStore.setting.hello || ''))
+const html = computed(() => DOMPurify.sanitize(marked(appStore.setting.hello || ''), { USE_PROFILES: { html: true } }))
 </script>
 <style scoped lang="scss">
 .account-settings { width: 100%; }

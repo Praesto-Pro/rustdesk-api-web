@@ -1,0 +1,270 @@
+{
+  "reviewedOn": "2026-10-30",
+  "baselineCommit": "4ead17d8a2aecbaa2d8f8d6fd9f1fe35754ff462",
+  "node": "v24.19.0",
+  "checks": {
+    "productionBuild": "passed",
+    "backendContracts": "passed",
+    "securityRegressions": "passed",
+    "browser": {
+      "fixtureDataOnly": true,
+      "backendContacted": false,
+      "baseline": false,
+      "results": [
+        {
+          "name": "Branded desktop shell, task groups, active route, and bounded layout",
+          "status": "passed"
+        },
+        {
+          "name": "Skip link focuses content without changing the hash route",
+          "status": "passed"
+        },
+        {
+          "name": "Device details retain a working accessible dialog",
+          "status": "passed"
+        },
+        {
+          "name": "Device filtering uses the original hostname query and supports an empty result",
+          "status": "passed"
+        },
+        {
+          "name": "Device request failures retain retry and recover",
+          "status": "passed"
+        },
+        {
+          "name": "Keyboard page search, route navigation, and hash refresh",
+          "status": "passed"
+        },
+        {
+          "name": "Primary routes remain reachable from navigation",
+          "status": "passed"
+        },
+        {
+          "name": "Language switching preserves translated navigation destinations",
+          "status": "passed"
+        },
+        {
+          "name": "Theme toggle persists and keeps readable application content",
+          "status": "passed"
+        },
+        {
+          "name": "Navigation drawer and keyboard return at 768px",
+          "status": "passed"
+        },
+        {
+          "name": "Navigation drawer and keyboard return at 390px",
+          "status": "passed"
+        },
+        {
+          "name": "Phone device cards keep identity, selection, details, and actions accessible",
+          "status": "passed"
+        },
+        {
+          "name": "Limited permissions hide administrative navigation and search results",
+          "status": "passed"
+        },
+        {
+          "name": "Sign-in branding, captcha retry, password payload, and token storage",
+          "status": "passed"
+        },
+        {
+          "name": "Server registration and password-disabled options remain effective",
+          "status": "passed"
+        },
+        {
+          "name": "OIDC initiation and callback preserve their existing payloads",
+          "status": "passed"
+        },
+        {
+          "name": "Sign-in selects an authorized landing page and preserves explicit return queries",
+          "status": "passed"
+        },
+        {
+          "name": "Registration retains its payload and uses an authorized landing page",
+          "status": "passed"
+        },
+        {
+          "name": "Automatic SSO is independent of password-only captcha options",
+          "status": "passed"
+        },
+        {
+          "name": "Administrator Markdown preserves formatting and removes active HTML",
+          "status": "passed"
+        },
+        {
+          "name": "An account with zero permissions loads its session only once",
+          "status": "passed"
+        },
+        {
+          "name": "Logout clears both browser tokens and cached identity",
+          "status": "passed"
+        },
+        {
+          "name": "Measure cold sign-in and device-page assets",
+          "status": "passed"
+        },
+        {
+          "name": "Browser errors and unexpected network activity",
+          "status": "passed"
+        }
+      ],
+      "failures": []
+    }
+  },
+  "audit": {
+    "baseline": {
+      "info": 0,
+      "low": 1,
+      "moderate": 6,
+      "high": 16,
+      "critical": 2,
+      "total": 25
+    },
+    "updated": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "production": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    }
+  },
+  "performance": {
+    "method": "Cold-context JS/CSS requests; sum of per-file gzip level 9; bytes, not latency",
+    "baseline": [
+      {
+        "label": "sign-in",
+        "rawBytes": 1721667,
+        "gzipBytes": 490269,
+        "assets": [
+          "/static/chunk/BrandMark-C1nDhp5n.js",
+          "/static/chunk/_@element-plus-DbZuMTp8.js",
+          "/static/chunk/_@popperjs-DB1lLFnh.js",
+          "/static/chunk/_@vue-DBRXa_yB.js",
+          "/static/chunk/__vendor-Cc1zBu9r.js",
+          "/static/chunk/_axios-BtuGy7By.js",
+          "/static/chunk/_element-plus-Bog6UNaq.js",
+          "/static/chunk/_plugin-vue_export-helper-DlAUqK2U.js",
+          "/static/chunk/login-Ca3xSBOm.js",
+          "/static/css/BrandMark-CZP53Wa5.css",
+          "/static/css/__vendor-DvwatFMe.css",
+          "/static/css/_element-plus-C1NqyMYf.css",
+          "/static/css/auth-Chf3IFt5.css",
+          "/static/css/index-DZMhnMr4.css",
+          "/static/entry/index-_95dhk9y.js"
+        ]
+      },
+      {
+        "label": "devices",
+        "rawBytes": 1774147,
+        "gzipBytes": 503807,
+        "assets": [
+          "/static/chunk/BrandMark-C1nDhp5n.js",
+          "/static/chunk/DeviceCards-DLb-OlHr.js",
+          "/static/chunk/_@element-plus-DbZuMTp8.js",
+          "/static/chunk/_@popperjs-DB1lLFnh.js",
+          "/static/chunk/_@vue-DBRXa_yB.js",
+          "/static/chunk/__vendor-Cc1zBu9r.js",
+          "/static/chunk/_axios-BtuGy7By.js",
+          "/static/chunk/_element-plus-Bog6UNaq.js",
+          "/static/chunk/_plugin-vue_export-helper-DlAUqK2U.js",
+          "/static/chunk/changePwdDialog-BmFfPPD5.js",
+          "/static/chunk/collection-Chictki3.js",
+          "/static/chunk/file-Dmzv2BFm.js",
+          "/static/chunk/index-CyYmX48G.js",
+          "/static/chunk/index-DBCP_uV-.js",
+          "/static/chunk/index-DCt-lFBR.js",
+          "/static/chunk/peer-CHfQT7Xb.js",
+          "/static/chunk/peer-CoetXNKD.js",
+          "/static/chunk/peer-D53ViPIE.js",
+          "/static/chunk/time-Cn92Jbet.js",
+          "/static/css/BrandMark-CZP53Wa5.css",
+          "/static/css/DeviceCards-BwjEzKl3.css",
+          "/static/css/__vendor-DvwatFMe.css",
+          "/static/css/_element-plus-C1NqyMYf.css",
+          "/static/css/index-DZMhnMr4.css",
+          "/static/css/index-Dda09bYu.css",
+          "/static/css/index-bBRFgawm.css",
+          "/static/entry/index-_95dhk9y.js"
+        ]
+      }
+    ],
+    "updated": [
+      {
+        "label": "sign-in",
+        "rawBytes": 700597,
+        "gzipBytes": 226688,
+        "assets": [
+          "/static/chunk/BrandMark-ChS3F50L.js",
+          "/static/chunk/_plugin-vue_export-helper-DlAUqK2U.js",
+          "/static/chunk/el-form-item-Ee5X8NqS.js",
+          "/static/chunk/index-BlSerZZ0.js",
+          "/static/chunk/index-OU1cCnbr.js",
+          "/static/chunk/login-BIi5R9iP.js",
+          "/static/css/BrandMark-CZP53Wa5.css",
+          "/static/css/auth-Chf3IFt5.css",
+          "/static/css/el-form-item-exjLSfBI.css",
+          "/static/css/index-Chl4V3wr.css",
+          "/static/entry/index-BiArU_ed.js"
+        ]
+      },
+      {
+        "label": "devices",
+        "rawBytes": 1056979,
+        "gzipBytes": 335816,
+        "assets": [
+          "/static/chunk/BrandMark-ChS3F50L.js",
+          "/static/chunk/DeviceCards-0dS5xPpt.js",
+          "/static/chunk/_plugin-vue_export-helper-DlAUqK2U.js",
+          "/static/chunk/changePwdDialog-DKLsbD1E.js",
+          "/static/chunk/collection-B0uqJXX8.js",
+          "/static/chunk/el-card-j4EAHWFa.js",
+          "/static/chunk/el-dialog-DTNv-X14.js",
+          "/static/chunk/el-dropdown-item-BMe-u7-F.js",
+          "/static/chunk/el-form-item-Ee5X8NqS.js",
+          "/static/chunk/el-pagination-DoNAO0Ui.js",
+          "/static/chunk/el-popper-DnXBqmrV.js",
+          "/static/chunk/el-select-VU3aJfpp.js",
+          "/static/chunk/el-table-column-BoqIcnwk.js",
+          "/static/chunk/el-tag-D1DPXDfB.js",
+          "/static/chunk/file-CAGxo3ot.js",
+          "/static/chunk/index-B3kEwoUP.js",
+          "/static/chunk/index-BlSerZZ0.js",
+          "/static/chunk/index-CgWqd480.js",
+          "/static/chunk/index-OU1cCnbr.js",
+          "/static/chunk/index-ReIXnxsD.js",
+          "/static/chunk/index-foNx7MNj.js",
+          "/static/chunk/peer-Ba6euxD5.js",
+          "/static/chunk/peer-CIxWxALh.js",
+          "/static/chunk/peer-qd28Z9Cy.js",
+          "/static/chunk/time-Bbs_2jdQ.js",
+          "/static/chunk/validator-7qEkn4Le.js",
+          "/static/css/BrandMark-CZP53Wa5.css",
+          "/static/css/DeviceCards-BwjEzKl3.css",
+          "/static/css/el-card-BAyktVMS.css",
+          "/static/css/el-dialog-DUbGnqO_.css",
+          "/static/css/el-dropdown-item-BeIfAqTO.css",
+          "/static/css/el-form-item-exjLSfBI.css",
+          "/static/css/el-pagination-CDeFZDGO.css",
+          "/static/css/el-popper-C8-vPSoj.css",
+          "/static/css/el-select-CTTCN8ol.css",
+          "/static/css/el-table-column-CkuDla-c.css",
+          "/static/css/el-tag-1VV9QMa7.css",
+          "/static/css/index-B8Qm_Gl3.css",
+          "/static/css/index-Chl4V3wr.css",
+          "/static/css/index-bBRFgawm.css",
+          "/static/entry/index-BiArU_ed.js"
+        ]
+      }
+    ]
+  },
+  "liveBackendTested": false
+}

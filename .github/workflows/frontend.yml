@@ -29,6 +29,11 @@ jobs:
         run: npm ci
       - name: Verify preserved backend contracts
         run: node scripts/verify-contracts.mjs
+      - name: Audit dependencies and verify security regressions
+        run: |
+          npm audit
+          npm audit --omit=dev
+          npm run test:security
       - name: Build production frontend
         run: npm run build
       - name: Install isolated browser verification tools
@@ -36,13 +41,6 @@ jobs:
           npm install --prefix "$RUNNER_TEMP/prc-ui-tools" --no-save --package-lock=false --ignore-scripts playwright@1.58.2
           "$RUNNER_TEMP/prc-ui-tools/node_modules/.bin/playwright" install --with-deps chromium
           printf 'PRC_PLAYWRIGHT_MODULE=%s\n' "$RUNNER_TEMP/prc-ui-tools/node_modules/playwright/index.mjs" >> "$GITHUB_ENV"
-      - name: Capture the original interface
-        continue-on-error: true
-        run: |
-          git worktree add --detach "$RUNNER_TEMP/prc-before" 3998c2a9213fcd047252776d0f0db33e6717026c
-          ln -s "$GITHUB_WORKSPACE/node_modules" "$RUNNER_TEMP/prc-before/node_modules"
-          npm --prefix "$RUNNER_TEMP/prc-before" run build
-          node scripts/verify-ui.mjs --baseline --dist="$RUNNER_TEMP/prc-before/dist"
       - name: Verify navigation, responsive views, and sign-in
         run: node scripts/verify-ui.mjs
       - name: Save interface evidence

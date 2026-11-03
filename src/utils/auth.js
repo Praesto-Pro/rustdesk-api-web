@@ -12,6 +12,8 @@ export function setToken (token) {
 }
 
 export function removeToken () {
+  localStorage.removeItem('wc-option:local:access_token')
+  localStorage.removeItem('user_info')
   return localStorage.removeItem(TokenKey)
 }
 
@@ -29,7 +31,8 @@ export function getCode() {
   const expiry = localStorage.getItem(OidcCodeExpiry); // 获取过期时间戳
   const now = Date.now(); // 当前时间戳
 
-  if (expiry && now > parseInt(expiry)) {
+  const timestamp = Number(expiry)
+  if (!expiry || !Number.isSafeInteger(timestamp) || timestamp <= now || timestamp > now + 60_000) {
     // 如果已过期，删除 code 和过期时间
     removeCode();
     return null;

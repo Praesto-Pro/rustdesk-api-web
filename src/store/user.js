@@ -4,6 +4,7 @@ import { setToken, removeToken, setCode, removeCode } from '@/utils/auth'
 import { useRouteStore } from '@/store/router'
 import { useAppStore } from '@/store/app'
 import { oidcAuth, oidcQuery } from '@/api/login'
+import { httpUrl } from '@/utils/safe-url'
 
 export const useUserStore = defineStore({
   id: 'user',
@@ -15,16 +16,15 @@ export const useUserStore = defineStore({
     role: '',
     avatar: '',
     route_names: [],
+    sessionLoaded: false,
   }),
 
   actions: {
     logout () {
       removeToken()
       removeCode()
-      this.$patch({
-        name: '',
-        role: {},
-      })
+      this.$reset()
+      useRouteStore().clearRoutes()
     },
 
     saveUserData (userData) {
@@ -34,15 +34,13 @@ export const useUserStore = defineStore({
       localStorage.setItem('user_info', JSON.stringify({ name: userData.username }))
       this.$patch({
         ...userData,
+        sessionLoaded: true,
       })
-      if (userData.route_names && userData.route_names.length) {
-        useRouteStore().addRoutes(userData.route_names)
-      }
+      useRouteStore().addRoutes(userData.route_names || [])
     },
 
     async login (form) {
       const res = await login(form).catch(e => e)
-      console.log('login', res)
       if (!res.code) {
         useAppStore().loadConfig()
         const userData = res.data
@@ -60,8 +58,9 @@ export const useUserStore = defineStore({
         setToken(userData.token)
         this.$patch({
           ...userData,
+          sessionLoaded: true,
         })
-        useRouteStore().addRoutes(userData.route_names)
+        useRouteStore().addRoutes(userData.route_names || [])
         return userData
       }
       return false
@@ -81,11 +80,12 @@ export const useUserStore = defineStore({
       const res = await oidcAuth(data).catch(_ => false)
       if (res) {
         const { code, url } = res.data
+        const destination = httpUrl(url).href
         setCode(code)
         if (provider == 'webauth') {
-          window.open(url)
+          window.open(destination, '_blank', 'noopener,noreferrer')
         } else {
-          window.location.href = url
+          window.location.href = destination
         }
       }
     },

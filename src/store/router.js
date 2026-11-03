@@ -29,6 +29,15 @@ export const useRouteStore = defineStore({
     keepAlive: [],
   }),
   actions: {
+    clearRoutes () {
+      const remove = routes => routes.forEach(route => {
+        if (route.children) remove(route.children)
+        if (route.name && router.hasRoute(route.name)) router.removeRoute(route.name)
+      })
+      remove(this.routes)
+      remove(lastRoutes)
+      this.$reset()
+    },
     addRoutes (accessRouteNames) {
       if (accessRouteNames.includes('*')) {
         this.routes = asyncRoutes
