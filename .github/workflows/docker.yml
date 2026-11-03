@@ -15,6 +15,7 @@ on:
       - vite.config.js
       - .env.production
       - .github/workflows/docker.yml
+      - scripts/verify-container.py
   workflow_dispatch:
 
 permissions:
@@ -46,8 +47,24 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          pull: true
+          load: true
+          tags: praesto-rustdesk-api:test
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      - name: Verify combined API and frontend with disposable data
+        env:
+          CONTAINER_IMAGE: praesto-rustdesk-api:test
+        run: |
+          docker pull lejianwen/rustdesk-api:latest
+          python3 -u scripts/verify-container.py
+      - name: Publish the tested image
+        env:
+          IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          while IFS= read -r tag; do
+            [ -n "$tag" ] || continue
+            docker tag praesto-rustdesk-api:test "$tag"
+            docker push "$tag"
+          done <<< "$IMAGE_TAGS"
