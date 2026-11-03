@@ -19,8 +19,8 @@
       <el-form label-width="100px">
         <el-form-item label="IP">
           <el-input v-model="form.form_input"></el-input>
-          <div>多个IP以 | 分割</div>
-          <div v-if="form.form_type==='delete'">, 全部填 <strong>all</strong></div>
+          <div>Separate multiple IP addresses with |</div>
+          <div v-if="form.form_type==='delete'">Enter this value to remove all entries: <strong>all</strong></div>
         </el-form-item>
         <el-form-item>
           <el-button @click="form.form_visible=false">{{ T('Cancel') }}</el-button>

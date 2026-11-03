@@ -357,7 +357,7 @@
 
   const toView = (row) => {
     formVisible.value = true
-    //将row中的数据赋值给formData
+    //Copy the row data into formData
     Object.keys(formData).forEach(key => {
       formData[key] = row[key]
     })

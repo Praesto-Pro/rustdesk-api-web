@@ -6,7 +6,7 @@ export function useOss (beforeUp, multiple) {
   let fileUploadData = reactive({
     policy: '',
     OSSAccessKeyId: '',
-    success_action_status: '200', // 让服务端返回200,不然，默认会返回204
+    success_action_status: '200', // Return HTTP 200 instead of the default HTTP 204
     callback: '',
     signature: '',
     'x:dir': '',
@@ -32,7 +32,7 @@ export function useOss (beforeUp, multiple) {
       fileUploadData['x:dir'] = obj['dir']
       fileUploadHost.value = obj['host']
     }
-    //多选文件时需要这个，不然每个文件上传的都是一样的data
+    //Use separate upload data for each selected file
     if (multiple) {
       await new Promise(resolve => {
         setTimeout(() => { resolve() }, 50)
