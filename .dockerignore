@@ -1,0 +1,7 @@
+.git
+node_modules
+dist
+ui-artifacts
+*.log
+.env.local
+.env.*.local
