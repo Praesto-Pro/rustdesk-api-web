@@ -36,13 +36,13 @@ export const asyncRoutes = [
   //   path: '/',
   //   name: 'Index',
   //   redirect: '/Home',
-  //   meta: { title: '首页', icon: 'house' },
+  //   meta: { title: 'Home', icon: 'house' },
   //   component: () => import('@/layout/index.vue'),
   //   children: [
   //     {
   //       path: '/Home',
   //       name: 'Home',
-  //       meta: { title: '首页', icon: 'house' },
+  //       meta: { title: 'Home', icon: 'house' },
   //       component: () => import('@/views/index/index.vue'),
   //     },
   //

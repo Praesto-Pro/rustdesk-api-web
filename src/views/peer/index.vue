@@ -413,14 +413,14 @@
 
   const toEdit = (row) => {
     formVisible.value = true
-    //将row中的数据赋值给formData
+    //Copy the row data into formData
     Object.keys(formData).forEach(key => {
       formData[key] = row[key]
     })
   }
   const toAdd = () => {
     formVisible.value = true
-    //重置formData
+    //Reset formData
     formData.row_id = 0
     formData.cpu = ''
     formData.hostname = ''
@@ -499,7 +499,7 @@
     return false
   }
   const toImport = () => {
-    ElMessage.warning('暂未实现')
+    ElMessage.warning('Not implemented yet')
   }
 
   const ABFormVisible = ref(false)
@@ -534,7 +534,7 @@
     }
   }
 
-  // 批量添加到地址簿 start
+  // Start adding selected devices to the address book
   const { allUsers, getAllUsers } = loadAllUsers()
   onMounted(getAllUsers)
   const {
@@ -575,7 +575,7 @@
       batchABFormVisible.value = false
     }
   }
-  // 批量添加到地址簿 end
+  // Finish adding selected devices to the address book
 
 
   const columnSettingVisible = ref(false)

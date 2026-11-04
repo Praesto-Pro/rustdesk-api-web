@@ -19,26 +19,26 @@ let alias = {
 }
 
 const conf = {
-  base: './', // index.html文件所在位置
-  root: './', // js导入的资源路径，src
+  base: './', // Location of index.html
+  root: './', // Root for imported resources
   server: {
     open: true,
     port: process.env.VITE_DEV_PORT,
     proxy: {
       [process.env.VITE_SERVER_API]: {
         target: process.env.VITE_SERVER_PATH,
-        // rewrite: path => path.replace(/^\/api/, '/api'), //为了模拟
+        // rewrite: path => path.replace(/^\/api/, '/api'), //For local simulation
         changeOrigin: true,
       },
     },
   },
   build: {
     target: 'es2020',
-    minify: 'esbuild', // 是否进行压缩,boolean | 'terser' | 'esbuild',默认使用 esbuild
-    manifest: false, // 是否产出maifest.json
-    sourcemap: false, // 是否产出soucemap.json
+    minify: 'esbuild', // Minifier: false, 'terser', or 'esbuild' (default)
+    manifest: false, // Generate a manifest
+    sourcemap: false, // Generate source maps
     emptyOutDir: true,
-    outDir: 'dist', // 产出目录
+    outDir: 'dist', // Output directory
     rollupOptions: {
       output: {
         chunkFileNames: 'static/chunk/[name]-[hash].js',

@@ -13,7 +13,7 @@ const apis = {
 
 export function useRepositories (api_type = 'my') {
 
-  //获取query
+  //Read query parameters
   const route = useRoute()
   const user_id = route.query?.user_id
   const listRes = reactive({
@@ -27,16 +27,16 @@ export function useRepositories (api_type = 'my') {
   })
 
   const flutterColor2rgba = (color) => {
-    // color 是十进制的数字,先转成16进制
+    // Convert the decimal color value to hexadecimal
     let hex = color.toString(16)
     console.log('hex', hex)
     if (hex.length < 8) {
-      //前面补0
+      //Pad with leading zeros
       hex = '0'.repeat(8 - hex.length) + hex
     }
-    //前两位是透明度
+    //The first two digits represent opacity
     let alpha = hex.slice(0, 2)
-    //后六位是颜色
+    //The last six digits represent the color
     let rgba = hex.slice(2)
     return `rgba(${parseInt(rgba.slice(0, 2), 16)}, ${parseInt(rgba.slice(2, 4), 16)}, ${parseInt(rgba.slice(4, 6), 16)}, ${parseInt(alpha, 16) / 255})`
   }
@@ -50,7 +50,7 @@ export function useRepositories (api_type = 'my') {
     let r = parseInt(rgba[1]).toString(16)
     let g = parseInt(rgba[2]).toString(16)
     let b = parseInt(rgba[3]).toString(16)
-    //如果是1位要补位
+    //Pad single-digit values
     if (alpha.length === 1) {
       alpha = '0' + alpha
     }
@@ -138,7 +138,7 @@ export function useRepositories (api_type = 'my') {
   const submit = async () => {
     console.log(formData)
     if (!formData.color) {
-      ElMessage.error('请选择颜色')
+      ElMessage.error('Please select a color')
       return
     }
     const api = formData.id ? apis[api_type].update : apis[api_type].create

@@ -21,7 +21,7 @@ router.beforeEach(async (to, from, next) => {
 
   const token = getToken()
   if (!token) {
-    //无token，跳转到登录
+    //Redirect to sign-in when no token is available
     if (whiteList.indexOf(to.path) !== -1) {
       next()
     } else {
@@ -29,7 +29,7 @@ router.beforeEach(async (to, from, next) => {
     }
 
   } else {
-    //有token
+    //A token is available
 
     const userStore = useUserStore(pinia)
 

@@ -78,7 +78,7 @@ export async function getPeerSlat (id) {
     })
     _ws.sendRendezvous({ request_relay })
 
-    //暂不支持pk
+    //Public keys are not supported yet
     const public_key = message.PublicKey.fromPartial({})
     _ws?.sendMessage({ public_key })
     // const secure = (await this.secure(pk)) || false;

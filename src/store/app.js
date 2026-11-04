@@ -12,15 +12,15 @@ import zhTw from 'element-plus/es/locale/lang/zh-tw'
 import { admin, app, server } from '@/api/config'
 
 const langs = {
-  'zh-CN': { name: '中文', value: zhCn, sideBarWidth: '210px' },
+  'zh-CN': { name: 'Chinese (Simplified)', value: zhCn, sideBarWidth: '210px' },
   'en': { name: 'English', value: en, sideBarWidth: '230px' },
   'fr': { name: 'Français', value: fr, sideBarWidth: '280px' },
   'ko': { name: '한국어', value: ko, sideBarWidth: '230px' },
   'ru': { name: 'Русский', value: ru, sideBarWidth: '250px' },
   'es': { name: 'Español', value: es, sideBarWidth: '280px' },
-  'zh-TW': { name: '中文繁体', value: zhTw, sideBarWidth: '210px' },
+  'zh-TW': { name: 'Chinese (Traditional)', value: zhTw, sideBarWidth: '210px' },
 }
-const defaultLang = normalizeLanguage(localStorage.getItem('lang') || navigator.language)
+const defaultLang = normalizeLanguage(localStorage.getItem('lang') || 'en')
 let sidebarCollapsed = false
 try { sidebarCollapsed = localStorage.getItem('prc-sidebar-collapsed') === 'true' } catch {}
 export const useAppStore = defineStore({
