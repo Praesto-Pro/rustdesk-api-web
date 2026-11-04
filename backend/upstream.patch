@@ -1,0 +1,39 @@
+diff --git a/http/controller/admin/config.go b/http/controller/admin/config.go
+index f4e7e30..1d57e98 100644
+--- a/http/controller/admin/config.go
++++ b/http/controller/admin/config.go
+@@ -5,6 +5,7 @@ import (
+ 	"github.com/lejianwen/rustdesk-api/v2/global"
+ 	"github.com/lejianwen/rustdesk-api/v2/http/response"
+ 	"github.com/lejianwen/rustdesk-api/v2/model"
++	"github.com/lejianwen/rustdesk-api/v2/praesto"
+ 	"github.com/lejianwen/rustdesk-api/v2/service"
+ 	"os"
+ 	"strings"
+@@ -88,6 +89,8 @@ func (co *Config) AdminConfig(c *gin.Context) {
+ 		}
+ 	}
+ 
++	hello = praesto.Message(hello)
++
+ 	//replace {{username}} to username
+ 	hello = strings.Replace(hello, "{{username}}", u.Username, -1)
+ 	response.Success(c, &gin.H{
+diff --git a/http/router/admin.go b/http/router/admin.go
+index 2cd01de..dbcc2b8 100644
+--- a/http/router/admin.go
++++ b/http/router/admin.go
+@@ -7,11 +7,13 @@ import (
+ 	"github.com/lejianwen/rustdesk-api/v2/http/controller/admin"
+ 	"github.com/lejianwen/rustdesk-api/v2/http/controller/admin/my"
+ 	"github.com/lejianwen/rustdesk-api/v2/http/middleware"
++	"github.com/lejianwen/rustdesk-api/v2/praesto"
+ 	swaggerFiles "github.com/swaggo/files"
+ 	ginSwagger "github.com/swaggo/gin-swagger"
+ )
+ 
+ func Init(g *gin.Engine) {
++	praesto.Register(g)
+ 
+ 	//swagger
+ 	//g.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

@@ -1,0 +1,49 @@
+# Host networking lets Traefik reach the existing RustDesk host listeners.
+http:
+  routers:
+    praesto-rustdesk-id:
+      rule: Host(`remote.praesto.pro`) && PathPrefix(`/ws/id`)
+      priority: 100
+      entryPoints: [websecure]
+      service: praesto-rustdesk-id
+      tls:
+        certResolver: letsencrypt
+    praesto-rustdesk-relay:
+      rule: Host(`remote.praesto.pro`) && PathPrefix(`/ws/relay`)
+      priority: 100
+      entryPoints: [websecure]
+      service: praesto-rustdesk-relay
+      tls:
+        certResolver: letsencrypt
+    praesto-rustdesk-api:
+      rule: Host(`remote.praesto.pro`)
+      priority: 10
+      entryPoints: [websecure]
+      service: praesto-rustdesk-api
+      middlewares: [praesto-rustdesk-cors]
+      tls:
+        certResolver: letsencrypt
+  services:
+    praesto-rustdesk-id:
+      loadBalancer:
+        servers:
+          - url: http://127.0.0.1:21118
+    praesto-rustdesk-relay:
+      loadBalancer:
+        servers:
+          - url: http://127.0.0.1:21119
+    praesto-rustdesk-api:
+      loadBalancer:
+        servers:
+          - url: http://127.0.0.1:21114
+  middlewares:
+    praesto-rustdesk-cors:
+      headers:
+        accessControlAllowOriginList:
+          - https://rustdesk.com
+          - https://www.rustdesk.com
+        accessControlAllowMethods: [GET, POST, PUT, DELETE, PATCH, OPTIONS]
+        accessControlAllowHeaders: [Origin, Content-Type, Accept, Authorization, api-token]
+        accessControlAllowCredentials: true
+        accessControlMaxAge: 600
+        addVaryHeader: true

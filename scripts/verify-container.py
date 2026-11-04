@@ -80,8 +80,26 @@ try:
     identity = api(origin, '/user/current', token=token)
     assert 'container-smoke' in json.dumps(identity)
     docker('exec', combined, 'test', '-s', '/app/data/rustdeskapi.db')
-    docker('exec', combined, 'test', '-d', '/app/resources/web')
-    print('PASS: modern frontend/assets, root redirect, live API, persisted login, read-only key mount, browser client')
+    # Check the actual legacy HTTP route, not just an on-disk directory.
+    assert b'<html' in request(origin, '/webclient/').lower()
+    # Only disposable fixture data is modified by these administrator checks.
+    docker('exec', combined, '/app/apimain', 'reset-admin-pwd', 'fixture-admin-password')
+    admin_login = api(origin, '/login', {'username': 'admin', 'password': 'fixture-admin-password'})
+    admin_token = admin_login['token']
+    settings = api(origin, '/settings', token=admin_token)['settings']
+    assert 'Welcome' in settings['message']
+    settings.update(message='Container welcome for {{username}}', public_url='https://remote.example.test/_admin', smtp_password='container-fixture-secret')
+    saved = api(origin, '/settings', settings, admin_token)
+    assert saved['smtp_password_set'] is True
+    assert 'smtp_password' not in saved['settings']
+    assert b'container-fixture-secret' not in request(origin, '/api/admin/settings', token=admin_token)
+    assert api(origin, '/config/admin', token=token)['hello'] == 'Container welcome for container-smoke'
+    assert api(origin, '/account/options')['reset_enabled'] is False
+    forbidden = json.loads(request(origin, '/api/admin/settings', token=token))
+    assert forbidden['code'] == 403
+    docker('exec', combined, 'test', '-s', '/app/data/praesto-mail.key')
+    print('PASS: administrator settings persist, credentials stay private, message is personalized, and regular users cannot edit settings')
+    print('PASS: modern frontend/assets, root redirect, live API, persisted login, read-only key mount, bundled legacy browser client')
     docker('restart', combined)
     # Docker may allocate a new ephemeral host port when restarting a container.
     port = json.loads(docker('inspect', combined))[0]['NetworkSettings']['Ports']['21114/tcp'][0]['HostPort']
@@ -94,7 +112,11 @@ try:
             time.sleep(1)
     else:
         raise RuntimeError('Persisted login failed after restart')
-    print('PASS: API restart preserves the fixture account')
+    admin_token = api(origin, '/login', {'username': 'admin', 'password': 'fixture-admin-password'})['token']
+    persisted = api(origin, '/settings', token=admin_token)
+    assert persisted['settings']['message'] == 'Container welcome for {{username}}'
+    assert persisted['smtp_password_set'] is True
+    print('PASS: API restart preserves fixture accounts and encrypted administrator settings')
 finally:
     for name in reversed(containers):
         subprocess.run(['docker', 'rm', '-f', name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

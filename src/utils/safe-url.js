@@ -19,3 +19,13 @@ export function webClientUrl(apiServer, origin = window.location.origin) {
   base.pathname = base.pathname.replace(/\/+$/, '') + '/webclient2/'
   return base
 }
+
+// The official client translates #/connect/<id> into a RustDesk connection link.
+// Server preferences must be configured on the hosted client's own origin first.
+export function hostedClientLink(clientURL, id) {
+  const url = httpUrl(clientURL)
+  if (url.protocol !== 'https:') throw new Error('The browser client requires HTTPS')
+  url.search = ''
+  url.hash = `/connect/${encodeURIComponent(String(id))}`
+  return url.href
+}

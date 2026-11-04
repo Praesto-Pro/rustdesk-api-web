@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import { getToken, setToken, removeToken, getCode, setCode } from '../src/utils/auth.js'
 import { jsonToCsv } from '../src/utils/file.js'
 import { parsePeerCsv } from '../src/utils/peer-csv.js'
-import { httpUrl, webClientUrl } from '../src/utils/safe-url.js'
+import { httpUrl, webClientUrl, hostedClientLink } from '../src/utils/safe-url.js'
 
 const values = new Map()
 globalThis.localStorage = { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, String(value)), removeItem: key => values.delete(key) }
@@ -29,6 +29,9 @@ for (const server of ['', 'http://localhost:21114', 'http://localhost.:21114', '
 assert.equal(webClientUrl('https://remote.example.test/prefix/').href, 'https://remote.example.test/prefix/webclient2/')
 assert.equal(webClientUrl('https://remote.example.test/?unused=1#old').href, 'https://remote.example.test/webclient2/')
 for (const server of ['javascript:alert(1)', 'https://user:password@example.test']) assert.throws(() => webClientUrl(server))
+assert.equal(hostedClientLink('https://rustdesk.com/web/', '38608196'), 'https://rustdesk.com/web/#/connect/38608196')
+assert.equal(hostedClientLink('https://client.example.test/web/?old=1#old', 'id/#?'), 'https://client.example.test/web/#/connect/id%2F%23%3F')
+for (const url of ['javascript:alert(1)', 'https://user:password@example.test', 'http://client.example.test']) assert.throws(() => hostedClientLink(url, '123'))
 const csv = await jsonToCsv([{ id: '=cmd()', hostname: 'A,"B"\nC', memory: null, username: '\t@SUM(A1)' }]).text()
 assert.ok(csv.includes("'=cmd()"))
 assert.ok(csv.includes("'\t@SUM(A1)"))

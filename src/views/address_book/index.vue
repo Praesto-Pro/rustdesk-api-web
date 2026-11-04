@@ -70,7 +70,6 @@
           <template #default="{row}">
             <el-button type="success" @click="connectByClient(row.id)">{{ T('Link') }}</el-button>
             <el-button v-if="appStore.setting.appConfig.web_client" type="success" @click="toWebClientLink(row)">Web Client</el-button>
-            <!--            <el-button type="primary" @click="toShowShare(row)">{{ T('ShareByWebClient') }}</el-button>-->
             <el-button @click="toEdit(row)">{{ T('Edit') }}</el-button>
             <el-button type="danger" @click="del(row)">{{ T('Delete') }}</el-button>
           </template>
@@ -168,12 +167,6 @@
         </el-form-item>
       </el-form>
     </el-dialog>
-    <!--    <el-dialog v-model="shareToWebClientVisible" width="900" :close-on-click-modal="false">
-          <shareByWebClient :id="shareToWebClientForm.id"
-                            :hash="shareToWebClientForm.hash"
-                            @cancel="shareToWebClientVisible=false"
-                            @success=""/>
-        </el-dialog>-->
   </div>
 </template>
 

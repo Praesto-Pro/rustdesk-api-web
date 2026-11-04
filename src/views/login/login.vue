@@ -31,6 +31,7 @@
           </el-form-item>
           <el-button native-type="submit" type="primary" class="auth-submit" :loading="signingIn" :disabled="!!pendingProvider || captchaLoading || (captchaRequired && !captchaCode)">{{ T('Sign in') }}</el-button>
         </el-form>
+        <div v-if="resetEnabled && !disablePwd" class="auth-footer"><router-link to="/email">Forgot your password?</router-link></div>
         <div v-if="options.length && !disablePwd" class="auth-divider"><span>{{ T('Or continue with') }}</span></div>
         <div v-if="options.length" class="auth-providers">
           <el-button v-for="option in options" :key="option.name" class="auth-provider" :loading="pendingProvider === option.name" :disabled="signingIn || (!!pendingProvider && pendingProvider !== option.name)" @click="handleOIDCLogin(option.name)">
@@ -57,6 +58,7 @@ import { useUserStore } from '@/store/user'
 import { useRouteStore } from '@/store/router'
 import { postAuthenticationDestination } from '@/utils/navigation'
 import { T } from '@/utils/i18n'
+import { accountOptions } from '@/api/account'
 import { loginOptions, captcha } from '@/api/login'
 import { getCode, removeCode } from '@/utils/auth'
 import googleImage from '@/assets/google.png'
@@ -68,6 +70,10 @@ const userStore = useUserStore()
 const routeStore = useRouteStore()
 const route = useRoute()
 const router = useRouter()
+const resetEnabled = ref(false)
+onMounted(async () => {
+  try { resetEnabled.value = !!(await accountOptions()).data.reset_enabled } catch { resetEnabled.value = false }
+})
 const formRef = ref(null)
 const options = ref([])
 const optionsLoading = ref(true)

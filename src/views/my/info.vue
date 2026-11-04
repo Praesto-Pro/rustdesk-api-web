@@ -59,8 +59,8 @@ const getMyOauth = async () => {
   providersError.value = ''
   try {
     const res = await myOauth()
-    if (!Array.isArray(res?.data)) throw new Error('Missing sign-in providers')
-    oidcData.value = res.data
+    if (res?.data != null && !Array.isArray(res.data)) throw new Error('Invalid sign-in providers')
+    oidcData.value = res.data || []
   } catch {
     providersError.value = T('Sign-in providers could not load. Try again.')
   } finally { providersLoading.value = false }

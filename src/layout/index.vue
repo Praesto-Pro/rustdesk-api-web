@@ -23,6 +23,7 @@
       <GAside mobile @close="navigationOpen = false" />
     </el-drawer>
     <PageSearch v-model="searchOpen" />
+    <WebClientLauncher />
   </div>
 </template>
 
@@ -38,6 +39,7 @@ import GAside from '@/layout/components/aside.vue'
 import GHeader from '@/layout/components/header.vue'
 import Tags from '@/layout/components/tags/index.vue'
 import PageSearch from '@/layout/components/PageSearch.vue'
+import WebClientLauncher from '@/layout/components/WebClientLauncher.vue'
 const app = useAppStore()
 const routeStore = useRouteStore()
 const tags = useTagsStore()
