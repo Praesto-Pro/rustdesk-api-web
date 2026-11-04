@@ -1,5 +1,6 @@
 <template>
   <div>
+    <AccountSettings />
     <h4 v-html="T('ServerCmdTips', {wiki: '<a target=\'_blank\' href=\'https://github.com/lejianwen/rustdesk-api/wiki/Rustdesk-Command\'>WIKI</a>'})"></h4>
     <h5>
       <span>ID {{ T('Status') }}: </span>
@@ -116,6 +117,7 @@
 
 
 <script setup>
+  import AccountSettings from '@/views/rustdesk/accountSettings.vue'
   import { create, list, remove, sendCmd, update } from '@/api/rustdesk'
   import { onMounted, reactive, ref } from 'vue'
   import { T } from '@/utils/i18n'

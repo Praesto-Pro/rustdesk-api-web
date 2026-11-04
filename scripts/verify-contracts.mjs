@@ -11,6 +11,8 @@ const protectedPaths = [
   'src/utils/webclient/',
   '.env.development',
   '.env.production',
+  // Account email endpoints are additive; existing API adapters stay protected.
+  ':(exclude)src/api/account.js',
 ]
 execFileSync('git', ['diff', '--exit-code', base, '--', ...protectedPaths], {
   stdio: 'inherit',
@@ -25,7 +27,7 @@ const routeValues = (source, key) => {
 for (const key of ['name', 'path']) {
   assert.deepEqual(
     routeValues(current('src/router/index.js'), key),
-    routeValues(baseline('src/router/index.js'), key),
+    [...routeValues(baseline('src/router/index.js'), key), ...(key === 'name' ? ['EmailAccount'] : ['/email'])].sort(),
     'Existing route ' + key + ' values must survive the frontend redesign',
   )
 }

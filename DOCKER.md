@@ -1,11 +1,12 @@
 # Combined RustDesk API and Praesto frontend
 
 This image extends `lejianwen/rustdesk-api:latest`, replacing its bundled admin
-frontend with the modernized Praesto interface. It retains the upstream API
-binary, startup command, configuration, browser clients, and data layout. API
-updates come from the upstream image; this repository does not maintain an API
-source fork. The publishing workflow pulls current base images on each build.
-Trigger the workflow manually to refresh the API between frontend changes.
+frontend with the modernized Praesto interface. It retains the upstream startup command, configuration, bundled legacy browser
+client resources, and data layout. The API binary is now built from a pinned
+upstream commit plus the Praesto account/email extension. See
+[backend setup and email administration](backend/README.md) for the source pin,
+SMTP settings, password resets, invitations, key backups, and verification.
+Updating the runtime base image alone does not update the pinned API source.
 
 The API and frontend share port **21114**. `/` redirects to `/_admin/`.
 There is no separate Nginx service, port 8080, or `RUSTDESK_API_URL` setting.
@@ -52,8 +53,9 @@ before pulling, and deploy its `sha-<full-commit>` tag for an unambiguous versio
 docker build --pull -t praesto-rustdesk-api:local .
 ```
 
-For a reproducible API baseline, pass
+For reproducible runtime resources, pin the base image with
 `--build-arg API_IMAGE=lejianwen/rustdesk-api@sha256:<digest>`.
+The API source version is pinned separately by `UPSTREAM_API_REF` in Dockerfile.
 Managed cloud builds need the session CA for npm:
 
 ```sh
@@ -78,3 +80,12 @@ The **Publish container image** GitHub Actions workflow publishes relevant
 `GITHUB_TOKEN` with `packages: write` and links the package to this repository.
 Organization policy must allow Actions and package creation.
 Publication runs the disposable integration test before pushing the tested image.
+
+## Traefik and browser connections
+
+For `remote.praesto.pro`, see [the Traefik deployment configuration](deploy/traefik/README.md).
+It preserves host networking and existing RustDesk data, adds WSS routing on port
+443 and hosted-client CORS, and documents enabling WebRTC on compatible clients.
+The old bundled `/webclient/` does not establish that `/webclient2/` exists:
+upstream v2.7 removed the v2 assets. Use the official hosted client for the
+new browser workflow; direct WebRTC requires compatible server signaling too.

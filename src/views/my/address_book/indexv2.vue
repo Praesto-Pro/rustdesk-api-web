@@ -69,7 +69,6 @@
             <template #default="{row}">
               <el-button type="success" @click="connectByClient(row.id)">{{ T('Link') }}</el-button>
               <el-button v-if="appStore.setting.appConfig.web_client" type="success" @click="toWebClientLink(row)">Web Client</el-button>
-              <el-button v-if="appStore.setting.appConfig.web_client" type="primary" @click="toShowShare(row)">{{ T('ShareByWebClient') }}</el-button>
               <el-button @click="toEdit(row)">{{ T('Edit') }}</el-button>
               <el-button type="danger" @click="del(row)">{{ T('Delete') }}</el-button>
             </template>
@@ -155,12 +154,6 @@
         </el-form-item>
       </el-form>
     </el-dialog>
-    <el-dialog v-model="shareToWebClientVisible" width="900" :close-on-click-modal="false">
-      <shareByWebClient :id="shareToWebClientForm.id"
-                        :hash="shareToWebClientForm.hash"
-                        @cancel="shareToWebClientVisible=false"
-                        @success=""/>
-    </el-dialog>
   </el-container>
 </template>
 
@@ -172,7 +165,6 @@
   import { useRepositories as useTagRepositories } from '@/views/tag/index'
   import { toWebClientLink } from '@/utils/webclient'
   import { T } from '@/utils/i18n'
-  import shareByWebClient from '@/views/address_book/components/shareByWebClient.vue'
   import { useAppStore } from '@/store/app'
   import { connectByClient } from '@/utils/peer'
   import { handleClipboard } from '@/utils/clipboard'
@@ -200,9 +192,6 @@
     toEdit,
     toAdd,
     submit,
-    shareToWebClientVisible,
-    shareToWebClientForm,
-    toShowShare,
   } = useRepositories()
 
   listQuery.is_my = 1

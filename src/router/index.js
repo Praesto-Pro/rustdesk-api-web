@@ -2,6 +2,12 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 
 const constantRoutes = [
   {
+    path: '/email',
+    name: 'EmailAccount',
+    meta: { title: 'Account access' },
+    component: () => import('@/views/login/email.vue'),
+  },
+  {
     path: '/login',
     name: 'Login',
     meta: { title: 'Login' },

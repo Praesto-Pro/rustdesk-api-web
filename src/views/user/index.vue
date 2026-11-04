@@ -7,6 +7,7 @@
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handlerQuery">{{ T('Filter') }}</el-button>
+          <InviteUser />
           <el-button type="danger" @click="toAdd">{{ T('Add') }}</el-button>
           <el-button type="success" @click="toExport">{{ T('Export') }}</el-button>
         </el-form-item>
@@ -61,6 +62,7 @@
 
 <script setup>
   import { useRepositories, useDel, useToEditOrAdd, useChangePwd } from '@/views/user/composables'
+  import InviteUser from '@/views/user/inviteUser.vue'
   import { T } from '@/utils/i18n'
   import { DISABLE_STATUS, ENABLE_STATUS } from '@/utils/common_options'
   import { update } from '@/api/user'

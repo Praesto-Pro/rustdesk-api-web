@@ -10,7 +10,7 @@ import { T } from '@/utils/i18n'
 
 NProgress.configure({ showSpinner: false }) // NProgress Configuration
 
-const whiteList = ['/login', '/register']
+const whiteList = ['/login', '/register', '/email']
 const routeStore = useRouteStore(pinia)
 const appStore = useAppStore(pinia)
 appStore.getAdminConfig()

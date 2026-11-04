@@ -64,6 +64,7 @@ async function fixtureContext({ authenticated = true, limited = false, permissio
     options: { ops: ['google'], auto_oidc: false, disable_pwd: false, register: true, need_captcha: false, ...options },
     requests: [], unexpected: [], errors: [], peerMode: 'normal', requireCaptchaOnce: false,
   }
+  const accountSettings = { message: 'Welcome, {{username}}.', public_url: 'https://remote.praesto.pro/_admin', smtp_enabled: true, smtp_host: 'smtp.example.test', smtp_port: 587, smtp_mode: 'starttls', smtp_username: 'sender', smtp_from: 'support@example.test', reset_enabled: true, invite_enabled: true }
   const user = { id: 1, username: 'Preview Operator', nickname: 'Preview Operator', email: 'operator@example.test', token: fixtureToken, role: limited ? 'user' : 'admin', route_names: permissions || (limited ? limitedRoutes : ['*']) }
   await context.addInitScript(({ authenticated, token }) => {
     localStorage.setItem('lang', 'en')
@@ -89,7 +90,7 @@ async function fixtureContext({ authenticated = true, limited = false, permissio
     const reply = (data, code = 0, message = '') => route.fulfill({
       status: 200, contentType: 'application/json', body: JSON.stringify({ code, data, message }),
     })
-    if (endpoint === '/config/admin') return reply({ title: 'Rustdesk API Admin', hello: scenario.options.hello || '' })
+    if (endpoint === '/config/admin') return reply({ title: 'Rustdesk API Admin', hello: scenario.options.hello ?? accountSettings.message.replaceAll('{{username}}', user.username) })
     if (endpoint === '/config/app') return reply({ web_client: 1 })
     if (endpoint === '/config/server') return reply({ id_server: 'rendezvous.example.test', key: '', relay_server: 'relay.example.test', api_server: 'http://127.0.0.1:21114' })
     if (endpoint === '/user/current') return reply(user)
@@ -106,7 +107,26 @@ async function fixtureContext({ authenticated = true, limited = false, permissio
       return reply(user)
     }
     if (endpoint === '/user/register') return reply(user)
-    if (endpoint === '/user/myOauth') return reply([])
+    if (endpoint === '/user/myOauth') {
+      if (scenario.options.providersFail) return reply(null, 500, 'Provider request failed')
+      return reply(scenario.options.providersNull ? null : [])
+    }
+    if (endpoint === '/account/browser-config') return reply({ client_url: 'https://rustdesk.com/web/', id_server: 'wss://remote.praesto.pro/ws/id', relay_server: 'wss://remote.praesto.pro/ws/relay', key: 'fixture-public-key' })
+    if (endpoint === '/account/options') return reply({ reset_enabled: accountSettings.reset_enabled, invite_enabled: accountSettings.invite_enabled })
+    if (endpoint === '/settings') {
+      if (request.method() === 'POST') {
+        for (const key of Object.keys(accountSettings)) if (key in body) accountSettings[key] = body[key]
+      }
+      return reply({ settings: accountSettings, smtp_password_set: true })
+    }
+    if (endpoint === '/settings/test-mail') return reply(null)
+    if (endpoint === '/settings/invite') return reply({ message: 'Invitation sent. The account will be created when the recipient sets a password.' })
+    if (endpoint === '/account/request-reset') return reply({ message: 'If an eligible account matches that email, a password-reset link will be sent.' })
+    if (endpoint === '/account/complete') return scenario.options.invalidEmailToken
+      ? reply(null, 101, 'This link is invalid or has expired.')
+      : reply({ message: 'Password saved. You can now sign in.' })
+    if (endpoint === '/rustdesk/sendCmd') return reply('')
+    if (endpoint === '/rustdesk/cmdList') return reply({ list: [], total: 0 })
     if (endpoint === '/oidc/auth') return reply({ code: 'fixture-oidc-code', url: origin + '/?oidc-preview=1#/login' })
     if (endpoint === '/oidc/auth-query') return reply(user)
     if (endpoint === '/my/peer/list' || endpoint === '/peer/list') {
@@ -117,6 +137,8 @@ async function fixtureContext({ authenticated = true, limited = false, permissio
       )
       return reply({ list: rows, total: rows.length })
     }
+    if (endpoint === '/address_book/list' || endpoint === '/my/address_book/list') return reply({ list: peers.map(p => ({ ...p, collection_id: 0, platform: 'Windows', tags: [], hash: '', peer: p })), total: peers.length })
+    if (endpoint === '/peer/simpleData') return reply({ list: peers })
     if (endpoint.endsWith('/list')) return reply({ list: [], total: 0 })
     scenario.unexpected.push(request.method() + ' ' + url.pathname)
     return reply({}, 500, 'Unexpected mocked endpoint: ' + endpoint)
@@ -207,17 +229,25 @@ try {
     await page.goto(origin + '/#/my/peer')
     await devicesReady(page)
 
-    await check('Web client button uses the public origin for a loopback API configuration', async () => {
-      await page.evaluate(() => {
-        window.__originalOpen = window.open
-        window.open = (...args) => { window.__webClientOpen = args; return null }
-      })
-      try {
-        await page.getByRole('button', { name: 'Web client', exact: true }).first().click()
-        const args = await page.evaluate(() => window.__webClientOpen)
-        assert.deepEqual(args, [origin + '/webclient2/#/901234567', '_blank', 'noopener,noreferrer'])
-      } finally {
-        await page.evaluate(() => { window.open = window.__originalOpen; delete window.__originalOpen; delete window.__webClientOpen })
+    await check('Web client buttons use the hosted client and show the private server settings', async () => {
+      for (const path of ['/my/peer', '/user/peer', '/my/address_book']) {
+        const auth = await fixtureContext()
+        try {
+          await auth.page.goto(origin + '/#' + path)
+          await auth.page.waitForLoadState('networkidle')
+          await auth.page.getByRole('button', { name: /^Web [Cc]lient$/, exact: true }).first().click()
+          const dialog = auth.page.getByRole('dialog', { name: 'Browser remote connection', exact: true })
+          await visible(dialog.getByText('wss://remote.praesto.pro/ws/id', { exact: true }))
+          await visible(dialog.getByText('wss://remote.praesto.pro/ws/relay', { exact: true }))
+          await visible(dialog.getByText('fixture-public-key', { exact: true }))
+          const link = dialog.getByRole('link', { name: 'Connect to device', exact: true })
+          assert.equal(await link.getAttribute('href'), 'https://rustdesk.com/web/#/connect/901234567')
+          assert.equal(await link.getAttribute('rel'), 'noopener noreferrer')
+          assert.equal(await link.getAttribute('target'), '_blank')
+          assert.ok(!(await link.getAttribute('href')).includes('token'))
+          assert.equal(await auth.page.getByRole('button', { name: /Share By Web Client/i }).count(), 0)
+          cleanScenario(auth.scenario)
+        } finally { await auth.context.close() }
       }
     })
 
@@ -555,6 +585,74 @@ try {
       for (const key of ['access_token', 'wc-option:local:access_token', 'user_info', 'oidc_code', 'oidc_code_expiry']) {
         assert.equal(await auth.page.evaluate(key => localStorage.getItem(key), key), null)
       }
+      cleanScenario(auth.scenario)
+      await auth.context.close()
+    })
+    await check('Null providers show an empty state, while real failures retain retry', async () => {
+      for (const [options, expected] of [[{ providersNull: true }, 'No sign-in providers are available.'], [{ providersFail: true }, 'Sign-in providers could not load. Try again.']]) {
+        const auth = await fixtureContext({ options })
+        await auth.page.goto(origin + '/#/')
+        await visible(auth.page.getByText(expected, { exact: true }))
+        assert.equal(await auth.page.getByRole('button', { name: 'Retry', exact: true }).count(), options.providersFail ? 1 : 0)
+        cleanScenario(auth.scenario)
+        await auth.context.close()
+      }
+    })
+    await check('Administrator message and SMTP settings can be saved and tested without exposing the password', async () => {
+      const auth = await fixtureContext()
+      await auth.page.goto(origin + '/#/serverCmd')
+      await visible(auth.page.getByRole('heading', { name: 'Account and email settings' }))
+      await auth.page.getByLabel('Message from your administrator', { exact: true }).fill('English welcome for {{username}}')
+      const password = auth.page.getByLabel('SMTP password', { exact: true })
+      assert.equal(await password.inputValue(), '')
+      await auth.page.getByRole('button', { name: 'Save account settings', exact: true }).click()
+      await visible(auth.page.getByText('Account settings saved.', { exact: true }))
+      await auth.page.getByLabel('Test recipient email', { exact: true }).fill('test@example.test')
+      await auth.page.getByRole('button', { name: 'Send test email', exact: true }).click()
+      await visible(auth.page.getByText('Test email accepted by the SMTP server. Check the recipient inbox.', { exact: true }))
+      await auth.page.goto(origin + '/#/')
+      await visible(auth.page.getByText('English welcome for Preview Operator', { exact: true }))
+      cleanScenario(auth.scenario)
+      await auth.context.close()
+    })
+    await check('Password reset is reachable without login and does not reveal whether an account exists', async () => {
+      const auth = await fixtureContext({ authenticated: false })
+      await auth.page.goto(origin + '/#/login')
+      await auth.page.getByRole('link', { name: 'Forgot your password?', exact: true }).click()
+      await auth.page.getByLabel('Email', { exact: true }).fill('unknown@example.test')
+      await auth.page.getByRole('button', { name: 'Send reset link', exact: true }).click()
+      await visible(auth.page.getByText('If an eligible account matches that email, a password-reset link will be sent.', { exact: true }))
+      cleanScenario(auth.scenario)
+      await auth.context.close()
+    })
+    await check('Invitation acceptance validates confirmation and removes its token from browser history', async () => {
+      const auth = await fixtureContext({ authenticated: false })
+      await auth.page.goto(origin + '/#/email?action=invite&token=fixture-email-token')
+      await visible(auth.page.getByRole('heading', { name: 'Set up your account' }))
+      await auth.page.waitForURL(url => !url.hash.includes('token='))
+      await auth.page.getByLabel('New password', { exact: true }).fill('chosen-password-123')
+      await auth.page.getByLabel('Confirm password', { exact: true }).fill('different-password')
+      await auth.page.getByRole('button', { name: 'Set password', exact: true }).click()
+      await visible(auth.page.getByText('Passwords do not match.', { exact: true }))
+      assert.equal(auth.scenario.requests.filter(r => r.endpoint === '/account/complete').length, 0)
+      await auth.page.getByLabel('Confirm password', { exact: true }).fill('chosen-password-123')
+      await auth.page.getByRole('button', { name: 'Set password', exact: true }).click()
+      await visible(auth.page.getByText('Password saved. You can now sign in.', { exact: true }))
+      assert.deepEqual(auth.scenario.requests.find(r => r.endpoint === '/account/complete').body, { token: 'fixture-email-token', action: 'invite', password: 'chosen-password-123' })
+      cleanScenario(auth.scenario)
+      await auth.context.close()
+    })
+    await check('Administrators can invite users without choosing their passwords', async () => {
+      const auth = await fixtureContext()
+      await auth.page.goto(origin + '/#/user/index')
+      await auth.page.getByRole('button', { name: 'Invite by email', exact: true }).click()
+      const dialog = auth.page.getByRole('dialog', { name: 'Invite a user' })
+      await dialog.getByLabel('Username', { exact: true }).fill('new-user')
+      await dialog.getByLabel('Email', { exact: true }).fill('new@example.test')
+      await dialog.getByRole('button', { name: 'Send invitation', exact: true }).click()
+      await visible(dialog.getByText('Invitation sent. The account will be created when the recipient sets a password.', { exact: true }))
+      const request = auth.scenario.requests.find(r => r.endpoint === '/settings/invite')
+      assert.deepEqual(request.body, { username: 'new-user', email: 'new@example.test' })
       cleanScenario(auth.scenario)
       await auth.context.close()
     })

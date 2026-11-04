@@ -8,10 +8,7 @@ import { useAppStore } from '@/store/app'
 const app = useAppStore()
 
 export const toWebClientLink = (row) => {
-  //v2
-  const url = webClientUrl(app.setting.rustdeskConfig.api_server)
-  url.hash = `/${encodeURIComponent(String(row.id))}`
-  window.open(url.href, '_blank', 'noopener,noreferrer')
+  window.dispatchEvent(new CustomEvent('praesto:web-client', { detail: { id: String(row.id) } }))
 }
 
 export async function getPeerSlat (id) {

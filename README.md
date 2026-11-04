@@ -68,3 +68,11 @@ See [the modernization review](docs/frontend-modernization.md) for the evaluatio
 ## Attribution
 
 Based on the original RustDesk API Web project by lejianwen. The existing MIT license and attribution are retained. UI direction follows the app-screen guidance in [Taste](https://github.com/Leonxlnx/taste-skill).
+
+## Account email administration
+
+The combined image supports an editable administrator message, SMTP setup and
+test mail under **Server settings**, email password resets, and **Users → Invite
+by email** so recipients choose their own passwords. See the
+[account/email deployment guide](backend/README.md). These features require the
+updated API binary; the frontend alone cannot send mail.
