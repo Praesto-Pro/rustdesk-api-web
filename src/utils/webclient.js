@@ -1,4 +1,4 @@
-import { httpUrl } from '@/utils/safe-url'
+import { webClientUrl } from '@/utils/safe-url'
 import { ElMessageBox } from 'element-plus'
 import { T } from '@/utils/i18n'
 import { useAppStore } from '@/store/app'
@@ -9,7 +9,7 @@ const app = useAppStore()
 
 export const toWebClientLink = (row) => {
   //v2
-  const url = httpUrl(`${app.setting.rustdeskConfig.api_server}/webclient2/`)
+  const url = webClientUrl(app.setting.rustdeskConfig.api_server)
   url.hash = `/${encodeURIComponent(String(row.id))}`
   window.open(url.href, '_blank', 'noopener,noreferrer')
 }
@@ -98,7 +98,7 @@ export async function getPeerSlat (id) {
 }
 
 export function getV2ShareUrl (token) {
-  const url = httpUrl(`${app.setting.rustdeskConfig.api_server}/webclient2/`)
+  const url = webClientUrl(app.setting.rustdeskConfig.api_server)
   url.hash = `/?share_token=${encodeURIComponent(String(token))}`
   return url.href
 }

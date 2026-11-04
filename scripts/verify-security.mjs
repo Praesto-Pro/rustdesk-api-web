@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import { getToken, setToken, removeToken, getCode, setCode } from '../src/utils/auth.js'
 import { jsonToCsv } from '../src/utils/file.js'
 import { parsePeerCsv } from '../src/utils/peer-csv.js'
-import { httpUrl } from '../src/utils/safe-url.js'
+import { httpUrl, webClientUrl } from '../src/utils/safe-url.js'
 
 const values = new Map()
 globalThis.localStorage = { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, String(value)), removeItem: key => values.delete(key) }
@@ -23,6 +23,12 @@ for (const expiry of ['', 'invalid', 'Infinity', String(Date.now() - 1), String(
 }
 for (const url of ['javascript:alert(1)', 'data:text/html,test', 'https://user:password@example.test']) assert.throws(() => httpUrl(url))
 assert.equal(httpUrl('/webclient2/').origin, 'https://example.test')
+for (const server of ['', 'http://localhost:21114', 'http://localhost.:21114', 'http://127.0.0.1:21114', 'http://127.0.0.2', 'http://[::1]:21114', 'http://0.0.0.0:21114']) {
+  assert.equal(webClientUrl(server).href, 'https://example.test/webclient2/')
+}
+assert.equal(webClientUrl('https://remote.example.test/prefix/').href, 'https://remote.example.test/prefix/webclient2/')
+assert.equal(webClientUrl('https://remote.example.test/?unused=1#old').href, 'https://remote.example.test/webclient2/')
+for (const server of ['javascript:alert(1)', 'https://user:password@example.test']) assert.throws(() => webClientUrl(server))
 const csv = await jsonToCsv([{ id: '=cmd()', hostname: 'A,"B"\nC', memory: null, username: '\t@SUM(A1)' }]).text()
 assert.ok(csv.includes("'=cmd()"))
 assert.ok(csv.includes("'\t@SUM(A1)"))
