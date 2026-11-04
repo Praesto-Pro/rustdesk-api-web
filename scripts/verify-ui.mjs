@@ -91,7 +91,7 @@ async function fixtureContext({ authenticated = true, limited = false, permissio
     })
     if (endpoint === '/config/admin') return reply({ title: 'Rustdesk API Admin', hello: scenario.options.hello || '' })
     if (endpoint === '/config/app') return reply({ web_client: 1 })
-    if (endpoint === '/config/server') return reply({ id_server: 'rendezvous.example.test', key: '', relay_server: 'relay.example.test', api_server: origin })
+    if (endpoint === '/config/server') return reply({ id_server: 'rendezvous.example.test', key: '', relay_server: 'relay.example.test', api_server: 'http://127.0.0.1:21114' })
     if (endpoint === '/user/current') return reply(user)
     if (endpoint === '/login-options') return reply(scenario.options)
     if (endpoint === '/captcha') {
@@ -206,6 +206,20 @@ try {
     const { page, scenario } = desktop
     await page.goto(origin + '/#/my/peer')
     await devicesReady(page)
+
+    await check('Web client button uses the public origin for a loopback API configuration', async () => {
+      await page.evaluate(() => {
+        window.__originalOpen = window.open
+        window.open = (...args) => { window.__webClientOpen = args; return null }
+      })
+      try {
+        await page.getByRole('button', { name: 'Web client', exact: true }).first().click()
+        const args = await page.evaluate(() => window.__webClientOpen)
+        assert.deepEqual(args, [origin + '/webclient2/#/901234567', '_blank', 'noopener,noreferrer'])
+      } finally {
+        await page.evaluate(() => { window.open = window.__originalOpen; delete window.__originalOpen; delete window.__webClientOpen })
+      }
+    })
 
     await check('Branded desktop shell, task groups, active route, and bounded layout', async () => {
       await visible(page.locator('#primary-navigation'))
