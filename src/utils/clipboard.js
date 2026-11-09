@@ -34,3 +34,27 @@ export function copyImage (targetNode) {
   }
   document.execCommand('copy')
 }
+
+export async function copyDeviceId (id, event) {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(String(id))
+    } else {
+      const input = document.createElement('textarea')
+      input.value = String(id)
+      input.style.position = 'fixed'
+      input.style.opacity = '0'
+      document.body.appendChild(input)
+      input.select()
+      let copied
+      try { copied = document.execCommand('copy') } finally {
+        input.remove()
+        event?.currentTarget?.focus()
+      }
+      if (!copied) throw new Error('Clipboard unavailable')
+    }
+    ElMessage.success(T('CopySuccess'))
+  } catch (_) {
+    ElMessage.error(T('CopyFailed'))
+  }
+}

@@ -41,6 +41,7 @@ const conf = {
     outDir: 'dist', // Output directory
     rollupOptions: {
       output: {
+        manualChunks: { 'element-icons': ['@element-plus/icons'] },
         chunkFileNames: 'static/chunk/[name]-[hash].js',
         entryFileNames: 'static/entry/[name]-[hash].js',
         assetFileNames: 'static/[ext]/[name]-[hash].[ext]'

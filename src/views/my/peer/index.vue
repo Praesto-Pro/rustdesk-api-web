@@ -132,7 +132,6 @@
           </template>
         </el-table-column>
 
-
         <template #empty>
           <div class="table-empty">
             <strong v-if="listRes.loading">{{ T('Loading devices…') }}</strong>
@@ -266,13 +265,11 @@
 </template>
 
 <script setup>
-  import { computed, onActivated, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+  import { onMounted, reactive, ref } from 'vue'
   import { list } from '@/api/my/peer'
-  import { ElMessage, ElMessageBox } from 'element-plus'
+  import { ElMessage } from 'element-plus'
   import { toWebClientLink } from '@/utils/webclient'
   import { T } from '@/utils/i18n'
-  import { timeAgo } from '@/utils/time'
-  import { jsonToCsv, downBlob } from '@/utils/file'
   import { useRepositories as useABRepositories } from '@/views/address_book/index'
   import { useAppStore } from '@/store/app'
   import { connectByClient } from '@/utils/peer'
@@ -280,67 +277,14 @@
   import DeviceCards from '@/components/DeviceCards.vue'
   import { batchCreateFromPeers } from '@/api/my/address_book'
 
+  import { usePeerList } from '@/views/peer/list'
+
   const appStore = useAppStore()
-  const listRes = reactive({
-    list: [], total: 0, loading: false, loaded: false, error: false,
-  })
-  const listQuery = reactive({
-    page: 1,
-    page_size: 10,
-    time_ago: null,
-    id: '',
-    hostname: '',
-  })
-
-
-  let latestRequest = 0
-  const getList = async () => {
-    const requestId = ++latestRequest
-    const query = { ...listQuery }
-    listRes.loading = true
-    listRes.error = false
-    const res = await list(query).catch(_ => false)
-    if (requestId !== latestRequest) return
-    listRes.loading = false
-    if (res) {
-      listRes.list = res.data.list
-      listRes.total = res.data.total
-      listRes.loaded = true
-      loadedQuery.value = query
-    } else {
-      listRes.error = true
-    }
-  }
-  const handlerQuery = () => {
-    if (listQuery.page === 1) {
-      getList()
-    } else {
-      listQuery.page = 1
-    }
-  }
-
-  /*const del = async (row) => {
-    const cf = await ElMessageBox.confirm(T('Confirm?', { param: T('Delete') }), {
-      confirmButtonText: T('Confirm'),
-      cancelButtonText: T('Cancel'),
-      type: 'warning',
-    }).catch(_ => false)
-    if (!cf) {
-      return false
-    }
-
-    const res = await remove({ row_id: row.row_id }).catch(_ => false)
-    if (res) {
-      ElMessage.success(T('OperationSuccess'))
-      getList()
-    }
-  }*/
-  onMounted(getList)
-  onActivated(() => { if (listRes.loaded) getList() })
-
-  watch(() => listQuery.page, getList)
-
-  watch(() => listQuery.page_size, handlerQuery)
+  const {
+    listRes, listQuery, getList, handlerQuery, timeFilters, toExport,
+    multipleSelection, handleSelectionChange, isCompact, resultRange,
+    hasFilters, clearFilters, lastSeen, lastSeenTitle, copyDeviceId,
+  } = usePeerList(list)
 
   const formVisible = ref(false)
   const formData = reactive({
@@ -363,41 +307,6 @@
     })
   }
 
-  const timeDis = (time) => {
-    let now = new Date().getTime()
-    let after = new Date(time * 1000).getTime()
-    return (now - after) / 1000
-  }
-
-  const timeFilters = computed(() => [
-    { text: T('MinutesLess', { param: 1 }, 1), value: -60 },
-    { text: T('HoursLess', { param: 1 }, 1), value: -3600 },
-    { text: T('DaysLess', { param: 1 }, 1), value: -86400 },
-    { text: '---------', value: 0 },
-    { text: T('MinutesAgo', { param: 1 }, 1), value: 60 },
-    { text: T('HoursAgo', { param: 1 }, 1), value: 3600 },
-    { text: T('DaysAgo', { param: 1 }, 1), value: 86400 },
-    { text: T('MonthsAgo', { param: 1 }, 1), value: 2592000 },
-    // { text: T('YearsAgo', { param: 1 }, 1), value: 31536000 },
-  ])
-
-  const toExport = async () => {
-    const q = { ...listQuery }
-    q.page_size = 10000
-    q.page = 1
-    const res = await list(q).catch(_ => false)
-    if (res) {
-      const data = res.data.list.map(item => {
-        item.last_online_time = item.last_online_time ? new Date(item.last_online_time * 1000).toLocaleString() : '-'
-        delete item.user_id
-        delete item.user
-        return item
-      })
-      const csv = jsonToCsv(data)
-      downBlob(csv, 'peers.csv')
-    }
-  }
-
   const {
     platformList: ABPlatformList,
     formVisible: ABFormVisible,
@@ -414,31 +323,6 @@
     fromPeer(peer)
     ABFormVisible.value = true
   }
-
-  const multipleSelection = ref([])
-  const handleSelectionChange = (val) => {
-    multipleSelection.value = val
-  }
-  /*const toBatchDelete = async () => {
-    if (!multipleSelection.value.length) {
-      ElMessage.warning(T('PleaseSelectData'))
-      return false
-    }
-    const cf = await ElMessageBox.confirm(T('Confirm?', { param: T('BatchDelete') }), {
-      confirmButtonText: T('Confirm'),
-      cancelButtonText: T('Cancel'),
-      type: 'warning',
-    }).catch(_ => false)
-    if (!cf) {
-      return false
-    }
-
-    const res = await batchRemove({ row_ids: multipleSelection.value.map(i => i.row_id) }).catch(_ => false)
-    if (res) {
-      ElMessage.success(T('OperationSuccess'))
-      getList()
-    }
-  }*/
 
   const batchABFormVisible = ref(false)
   const toBatchAddToAB = () => {
@@ -459,10 +343,6 @@
       return false
     }
     batchABFormData.value.peer_ids = multipleSelection.value.map(i => i.row_id)
-    if (!batchABFormData.value.peer_ids.length) {
-      ElMessage.warning(T('PleaseSelectData'))
-      return false
-    }
 
     const res = await batchCreateFromPeers(batchABFormData.value).catch(_ => false)
     if (res) {
@@ -471,69 +351,9 @@
     }
   }
 
-
   const showTechnicalColumns = ref(false)
 
-  const isCompact = ref(false)
-  const viewportQuery = window.matchMedia('(max-width: 767px)')
-  const updateViewport = () => {
-    if (isCompact.value !== viewportQuery.matches) multipleSelection.value = []
-    isCompact.value = viewportQuery.matches
-  }
-  watch(() => listRes.list, () => { multipleSelection.value = [] })
-  updateViewport()
-  onMounted(() => viewportQuery.addEventListener('change', updateViewport))
-  onBeforeUnmount(() => viewportQuery.removeEventListener('change', updateViewport))
-
-  const loadedQuery = ref({ page: 1, page_size: 10 })
-  const resultRange = computed(() => {
-    if (!listRes.loaded || !listRes.list.length) return ''
-    const start = (loadedQuery.value.page - 1) * loadedQuery.value.page_size + 1
-    return start + '–' + Math.min(start + listRes.list.length - 1, listRes.total)
-  })
-  const hasFilters = computed(() => Object.entries(listQuery).some(([key, value]) =>
-    !['page', 'page_size'].includes(key) && value !== '' && value !== null && value !== undefined
-  ))
-  const clearFilters = () => {
-    Object.keys(listQuery).forEach(key => {
-      if (!['page', 'page_size'].includes(key)) listQuery[key] = key === 'time_ago' ? null : ''
-    })
-    handlerQuery()
-  }
-  const lastSeen = (value) => {
-    const timestamp = Number(value)
-    return Number.isFinite(timestamp) && timestamp > 0 ? timeAgo(timestamp * 1000) : T('Unknown')
-  }
-  const lastSeenTitle = (value) => {
-    const timestamp = Number(value)
-    return Number.isFinite(timestamp) && timestamp > 0 ? new Date(timestamp * 1000).toLocaleString() : T('Unknown')
-  }
-  const copyDeviceId = async (id, event) => {
-    try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(String(id))
-      } else {
-        const input = document.createElement('textarea')
-        input.value = String(id)
-        input.style.position = 'fixed'
-        input.style.opacity = '0'
-        document.body.appendChild(input)
-        input.select()
-        let copied
-        try { copied = document.execCommand('copy') } finally {
-          input.remove()
-          event?.currentTarget?.focus()
-        }
-        if (!copied) throw new Error('Clipboard unavailable')
-      }
-      ElMessage.success(T('CopySuccess'))
-    } catch (_) {
-      ElMessage.error(T('CopyFailed'))
-    }
-  }
-
 </script>
-
 
 <style scoped lang="scss">
 .device-page { min-width: 0; color: var(--prc-text); }

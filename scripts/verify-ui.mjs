@@ -344,6 +344,34 @@ try {
       await devicesReady(page)
     })
 
+    await check('Device column drafts cancel cleanly and saved ordering survives reload', async () => {
+      const auth = await fixtureContext()
+      await auth.page.goto(origin + '/#/user/peer')
+      await devicesReady(auth.page)
+      const headers = auth.page.locator('.el-table__header-wrapper th')
+      const initialHeaders = await headers.allTextContents()
+      const columns = auth.page.getByRole('dialog', { name: 'Columns', exact: true })
+      const labels = columns.locator('.el-checkbox__label')
+      await auth.page.getByRole('button', { name: 'Columns', exact: true }).click()
+      const initialLabels = await labels.allTextContents()
+      const moveDown = () => columns.getByRole('button', { name: 'Move down ' + initialLabels[0], exact: true }).click()
+      await moveDown()
+      assert.deepEqual((await labels.allTextContents()).slice(0, 2), initialLabels.slice(0, 2).reverse())
+      await columns.getByRole('button', { name: 'Cancel', exact: true }).click()
+      assert.deepEqual(await headers.allTextContents(), initialHeaders)
+      await auth.page.getByRole('button', { name: 'Columns', exact: true }).click()
+      assert.deepEqual(await labels.allTextContents(), initialLabels)
+      await moveDown()
+      await columns.getByRole('button', { name: 'Save', exact: true }).click()
+      await auth.page.reload()
+      await devicesReady(auth.page)
+      const expected = [...initialHeaders]
+      ;[expected[1], expected[2]] = [expected[2], expected[1]]
+      assert.deepEqual(await headers.allTextContents(), expected)
+      cleanScenario(auth.scenario)
+      await auth.context.close()
+    })
+
     await check('Language switching preserves translated navigation destinations', async () => {
       await page.getByRole('button', { name: 'Change language', exact: true }).click()
       await page.getByRole('menuitem', { name: 'Français', exact: true }).click()

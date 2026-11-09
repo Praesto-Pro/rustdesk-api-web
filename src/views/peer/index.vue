@@ -147,7 +147,6 @@
           </template>
         </el-table-column>
 
-
         <template #empty>
           <div class="table-empty">
             <strong v-if="listRes.loading">{{ T('Loading devices…') }}</strong>
@@ -258,16 +257,6 @@
             <el-option v-for="c in collectionListResForBatchCreateAB.list" :key="c.id" :label="c.name" :value="c.id"></el-option>
           </el-select>
         </el-form-item>
-        <!--        <el-form-item :label="T('Tags')" prop="tags">
-                  <el-select v-model="batchABFormData.tags" multiple>
-                    <el-option
-                        v-for="item in tagListRes.list"
-                        :key="item.name"
-                        :label="item.name"
-                        :value="item.name"
-                    ></el-option>
-                  </el-select>
-                </el-form-item>-->
         <el-form-item>
           <el-button @click="batchABFormVisible = false">{{ T('Cancel') }}</el-button>
           <el-button @click="submitBatchAddToAB" type="primary">{{ T('Submit') }}</el-button>
@@ -275,13 +264,12 @@
       </el-form>
     </el-dialog>
 
-
     <el-dialog v-model="columnSettingVisible" :title="T('Columns')" width="min(520px, calc(100vw - 32px))">
       <p>{{ T('Choose which details appear and arrange their order.') }}</p>
       <div v-for="(row, key) in columnDraft" :key="row.name" class="column-row">
         <el-checkbox v-model="row.visible">{{ T(row.label) }}</el-checkbox>
-        <el-button :icon="ArrowUp" :disabled="key === 0" :aria-label="T('Move up') + ' ' + T(row.label)" @click="upColumn(key)" />
-        <el-button :icon="ArrowDown" :disabled="key === columnDraft.length - 1" :aria-label="T('Move down') + ' ' + T(row.label)" @click="downColumn(key)" />
+        <el-button :icon="ArrowUp" :disabled="key === 0" :aria-label="T('Move up') + ' ' + T(row.label)" @click="moveColumn(key, -1)" />
+        <el-button :icon="ArrowDown" :disabled="key === columnDraft.length - 1" :aria-label="T('Move down') + ' ' + T(row.label)" @click="moveColumn(key, 1)" />
       </div>
       <template #footer>
         <el-button @click="columnSettingVisible = false">{{ T('Cancel') }}</el-button>
@@ -294,15 +282,13 @@
 
 <script setup>
   import DeviceCards from '@/components/DeviceCards.vue'
-  import { computed, onActivated, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+  import { onMounted, reactive, ref } from 'vue'
   import { batchRemove, create, list, remove, update } from '@/api/peer'
   import { list as groupList } from '@/api/device_group'
   import { ElMessage, ElMessageBox } from 'element-plus'
   import { parsePeerCsv } from '@/utils/peer-csv'
   import { toWebClientLink } from '@/utils/webclient'
   import { T } from '@/utils/i18n'
-  import { timeAgo } from '@/utils/time'
-  import { jsonToCsv, downBlob } from '@/utils/file'
   import { loadAllUsers } from '@/global'
   import { useAppStore } from '@/store/app'
   import { connectByClient } from '@/utils/peer'
@@ -311,6 +297,8 @@
   import { useRepositories as useCollectionRepositories } from '@/views/address_book/collection'
   import createABForm from '@/views/peer/createABForm.vue'
   import { UploadFilled } from '@element-plus/icons-vue'
+
+  import { usePeerList } from '@/views/peer/list'
 
   const appStore = useAppStore()
 
@@ -334,45 +322,11 @@
   onMounted(getGroupList)
   //
 
-  const listRes = reactive({
-    list: [], total: 0, loading: false, loaded: false, error: false,
-  })
-  const listQuery = reactive({
-    page: 1,
-    page_size: 10,
-    time_ago: null,
-    id: '',
-    hostname: '',
-    username: '',
-    ip: '',
-  })
-
-
-  let latestRequest = 0
-  const getList = async () => {
-    const requestId = ++latestRequest
-    const query = { ...listQuery }
-    listRes.loading = true
-    listRes.error = false
-    const res = await list(query).catch(_ => false)
-    if (requestId !== latestRequest) return
-    listRes.loading = false
-    if (res) {
-      listRes.list = res.data.list
-      listRes.total = res.data.total
-      listRes.loaded = true
-      loadedQuery.value = query
-    } else {
-      listRes.error = true
-    }
-  }
-  const handlerQuery = () => {
-    if (listQuery.page === 1) {
-      getList()
-    } else {
-      listQuery.page = 1
-    }
-  }
+  const {
+    listRes, listQuery, getList, handlerQuery, timeFilters, toExport,
+    multipleSelection, handleSelectionChange, isCompact, resultRange,
+    hasFilters, clearFilters, lastSeen, lastSeenTitle, copyDeviceId,
+  } = usePeerList(list, { username: '', ip: '' })
 
   const del = async (row) => {
     const cf = await ElMessageBox.confirm(T('Confirm?', { param: T('Delete') }), {
@@ -390,13 +344,6 @@
       getList()
     }
   }
-  onMounted(getList)
-  onActivated(() => { if (listRes.loaded) getList() })
-
-  watch(() => listQuery.page, getList)
-
-  watch(() => listQuery.page_size, handlerQuery)
-
   const formVisible = ref(false)
   const formData = reactive({
     row_id: 0,
@@ -441,54 +388,14 @@
     }
   }
 
-  const timeDis = (time) => {
-    let now = new Date().getTime()
-    let after = new Date(time * 1000).getTime()
-    return (now - after) / 1000
-  }
-
-  const timeFilters = computed(() => [
-    { text: T('MinutesLess', { param: 1 }, 1), value: -60 },
-    { text: T('HoursLess', { param: 1 }, 1), value: -3600 },
-    { text: T('DaysLess', { param: 1 }, 1), value: -86400 },
-    { text: '---------', value: 0 },
-    { text: T('MinutesAgo', { param: 1 }, 1), value: 60 },
-    { text: T('HoursAgo', { param: 1 }, 1), value: 3600 },
-    { text: T('DaysAgo', { param: 1 }, 1), value: 86400 },
-    { text: T('MonthsAgo', { param: 1 }, 1), value: 2592000 },
-    // { text: T('YearsAgo', { param: 1 }, 1), value: 31536000 },
-  ])
-
-  const toExport = async () => {
-    const q = { ...listQuery }
-    q.page_size = 10000
-    q.page = 1
-    const res = await list(q).catch(_ => false)
-    if (res) {
-      const data = res.data.list.map(item => {
-        item.last_online_time = item.last_online_time ? new Date(item.last_online_time * 1000).toLocaleString() : '-'
-        delete item.user_id
-        delete item.user
-        return item
-      })
-      const csv = jsonToCsv(data)
-      downBlob(csv, 'peers.csv')
-    }
-  }
-
   const showImport = ref(false)
-  const canKeys = ['id', 'cpu', 'hostname', 'memory', 'os', 'username', 'uuid', 'version', 'group_id']
   const parseCsv = (file) => {
     const reader = new FileReader()
     reader.onload = async (e) => {
       let values
       try { values = parsePeerCsv(e.target.result) }
       catch (error) { ElMessage.error(error.message); return }
-      const pa = []
-      values.map(item => {
-        pa.push(create(item))
-      })
-      const res = await Promise.all(pa).catch(_ => false)
+      const res = await Promise.all(values.map(item => create(item))).catch(_ => false)
       if (res) {
         ElMessage.success(T('OperationSuccess'))
         getList()
@@ -498,9 +405,6 @@
     reader.readAsText(file)
     return false
   }
-  const toImport = () => {
-    ElMessage.warning('Not implemented yet')
-  }
 
   const ABFormVisible = ref(false)
   const clickRow = ref({})
@@ -509,10 +413,6 @@
     ABFormVisible.value = true
   }
 
-  const multipleSelection = ref([])
-  const handleSelectionChange = (val) => {
-    multipleSelection.value = val
-  }
   const toBatchDelete = async () => {
     if (!multipleSelection.value.length) {
       ElMessage.warning(T('PleaseSelectData'))
@@ -564,10 +464,6 @@
       return false
     }
     batchABFormData.value.peer_ids = multipleSelection.value.map(i => i.row_id)
-    if (!batchABFormData.value.peer_ids.length) {
-      ElMessage.warning(T('PleaseSelectData'))
-      return false
-    }
 
     const res = await batchCreateFromPeers(batchABFormData.value).catch(_ => false)
     if (res) {
@@ -577,9 +473,8 @@
   }
   // Finish adding selected devices to the address book
 
-
   const columnSettingVisible = ref(false)
-  const allColumns = ref([
+  const allColumns = [
     { name: 'hostname', visible: true, label: 'Hostname' },
     { name: 'id', visible: true, label: 'Device ID' },
     { name: 'os', visible: true, label: 'Os' },
@@ -594,24 +489,24 @@
     { name: 'alias', visible: false, label: 'Alias' },
     { name: 'created_at', visible: false, label: 'CreatedAt' },
     { name: 'updated_at', visible: false, label: 'UpdatedAt' },
-  ])
+  ]
   const readColumns = () => {
     try {
       const saved = JSON.parse(localStorage.getItem('peer_visible_columns'))
       if (Array.isArray(saved)) {
         const seen = new Set()
         const columns = saved.flatMap(item => {
-          const original = allColumns.value.find(column => column.name === item?.name)
+          const original = allColumns.find(column => column.name === item?.name)
           if (!original || seen.has(original.name)) return []
           seen.add(original.name)
           return [{ ...original, visible: typeof item.visible === 'boolean' ? item.visible : original.visible }]
         })
-        return [...columns, ...allColumns.value.filter(column => !seen.has(column.name)).map(column => ({ ...column }))]
+        return [...columns, ...allColumns.filter(column => !seen.has(column.name)).map(column => ({ ...column }))]
       }
     } catch (_) {
       // A malformed preference must not prevent the device list from opening.
     }
-    return allColumns.value.map(column => ({ ...column }))
+    return allColumns.map(column => ({ ...column }))
   }
   const visibleColumns = ref(readColumns())
   const columnDraft = ref([])
@@ -629,77 +524,15 @@
     }
     columnSettingVisible.value = false
   }
-  const upColumn = (index) => {
-    if (index === 0) return
-    const [column] = columnDraft.value.splice(index, 1)
-    columnDraft.value.splice(index - 1, 0, column)
-  }
-  const downColumn = (index) => {
-    if (index === columnDraft.value.length - 1) return
-    const [column] = columnDraft.value.splice(index, 1)
-    columnDraft.value.splice(index + 1, 0, column)
-  }
-
-  const isCompact = ref(false)
-  const viewportQuery = window.matchMedia('(max-width: 767px)')
-  const updateViewport = () => {
-    if (isCompact.value !== viewportQuery.matches) multipleSelection.value = []
-    isCompact.value = viewportQuery.matches
-  }
-  watch(() => listRes.list, () => { multipleSelection.value = [] })
-  updateViewport()
-  onMounted(() => viewportQuery.addEventListener('change', updateViewport))
-  onBeforeUnmount(() => viewportQuery.removeEventListener('change', updateViewport))
-
-  const loadedQuery = ref({ page: 1, page_size: 10 })
-  const resultRange = computed(() => {
-    if (!listRes.loaded || !listRes.list.length) return ''
-    const start = (loadedQuery.value.page - 1) * loadedQuery.value.page_size + 1
-    return start + '–' + Math.min(start + listRes.list.length - 1, listRes.total)
-  })
-  const hasFilters = computed(() => Object.entries(listQuery).some(([key, value]) =>
-    !['page', 'page_size'].includes(key) && value !== '' && value !== null && value !== undefined
-  ))
-  const clearFilters = () => {
-    Object.keys(listQuery).forEach(key => {
-      if (!['page', 'page_size'].includes(key)) listQuery[key] = key === 'time_ago' ? null : ''
-    })
-    handlerQuery()
-  }
-  const lastSeen = (value) => {
-    const timestamp = Number(value)
-    return Number.isFinite(timestamp) && timestamp > 0 ? timeAgo(timestamp * 1000) : T('Unknown')
-  }
-  const lastSeenTitle = (value) => {
-    const timestamp = Number(value)
-    return Number.isFinite(timestamp) && timestamp > 0 ? new Date(timestamp * 1000).toLocaleString() : T('Unknown')
-  }
-  const copyDeviceId = async (id, event) => {
-    try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(String(id))
-      } else {
-        const input = document.createElement('textarea')
-        input.value = String(id)
-        input.style.position = 'fixed'
-        input.style.opacity = '0'
-        document.body.appendChild(input)
-        input.select()
-        let copied
-        try { copied = document.execCommand('copy') } finally {
-          input.remove()
-          event?.currentTarget?.focus()
-        }
-        if (!copied) throw new Error('Clipboard unavailable')
-      }
-      ElMessage.success(T('CopySuccess'))
-    } catch (_) {
-      ElMessage.error(T('CopyFailed'))
-    }
+  const moveColumn = (index, offset) => {
+    const columns = columnDraft.value
+    const target = index + offset
+    if (target < 0 || target >= columns.length) return
+    const [column] = columns.splice(index, 1)
+    columns.splice(target, 0, column)
   }
 
 </script>
-
 
 <style scoped lang="scss">
 .device-page { min-width: 0; color: var(--prc-text); }
