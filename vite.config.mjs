@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite'
-import * as path from 'path'
+import { fileURLToPath } from 'node:url'
 import * as dotenv from 'dotenv'
 import * as fs from 'fs'
 import vue from '@vitejs/plugin-vue'
@@ -14,7 +14,7 @@ for (const k in envConfig) {
 }
 
 let alias = {
-  '@': path.resolve(__dirname, './src'),
+  '@': fileURLToPath(new URL('./src', import.meta.url)),
   'vue$': 'vue/dist/vue.runtime.esm-bundler.js',
 }
 
@@ -34,14 +34,16 @@ const conf = {
   },
   build: {
     target: 'es2020',
-    minify: 'esbuild', // Minifier: false, 'terser', or 'esbuild' (default)
+    minify: true, // Use Vite's built-in production minifier
     manifest: false, // Generate a manifest
     sourcemap: false, // Generate source maps
     emptyOutDir: true,
     outDir: 'dist', // Output directory
-    rollupOptions: {
+    rolldownOptions: {
       output: {
-        manualChunks: { 'element-icons': ['@element-plus/icons'] },
+        codeSplitting: {
+          groups: [{ name: 'element-icons', test: /node_modules[\\/]@element-plus[\\/]icons[\\/]/ }],
+        },
         chunkFileNames: 'static/chunk/[name]-[hash].js',
         entryFileNames: 'static/entry/[name]-[hash].js',
         assetFileNames: 'static/[ext]/[name]-[hash].[ext]'
