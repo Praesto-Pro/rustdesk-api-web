@@ -1,6 +1,6 @@
 # Praesto Remote Control
 
-A Vue 3 and Element Plus interface for the existing [RustDesk API](https://github.com/lejianwen/rustdesk-api).
+Praesto Remote Control is a standalone project maintained by Praesto Pro. It provides a Vue 3 and Element Plus interface for the [RustDesk API](https://github.com/lejianwen/rustdesk-api).
 
 Manage devices, saved connections, sharing, activity, and account access from a responsive workspace. The interface retains the existing backend API, permissions, and native/browser connection behavior.
 
@@ -67,7 +67,7 @@ See [the modernization review](docs/frontend-modernization.md) for the evaluatio
 
 ## Attribution
 
-Based on the original RustDesk API Web project by lejianwen. The existing MIT license and attribution are retained. UI direction follows the app-screen guidance in [Taste](https://github.com/Leonxlnx/taste-skill).
+Praesto Remote Control builds on [RustDesk API Web](https://github.com/lejianwen/rustdesk-api-web), originally created by lejianwen. The original attribution is preserved in the [MIT license](LICENSE). UI direction follows the app-screen guidance in [Taste](https://github.com/Leonxlnx/taste-skill).
 
 ## Account email administration
 
