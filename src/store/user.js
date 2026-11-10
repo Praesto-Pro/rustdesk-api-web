@@ -6,8 +6,7 @@ import { useAppStore } from '@/store/app'
 import { oidcAuth, oidcQuery } from '@/api/login'
 import { httpUrl } from '@/utils/safe-url'
 
-export const useUserStore = defineStore({
-  id: 'user',
+export const useUserStore = defineStore('user', {
   state: () => ({
     nickname: '',
     username: '',

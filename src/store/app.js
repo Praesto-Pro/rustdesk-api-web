@@ -23,8 +23,7 @@ const langs = {
 const defaultLang = normalizeLanguage(localStorage.getItem('lang') || 'en')
 let sidebarCollapsed = false
 try { sidebarCollapsed = localStorage.getItem('prc-sidebar-collapsed') === 'true' } catch {}
-export const useAppStore = defineStore({
-  id: 'App',
+export const useAppStore = defineStore('App', {
   state: () => ({
     setting: {
       title: PRODUCT_NAME,
