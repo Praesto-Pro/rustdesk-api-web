@@ -1,0 +1,80 @@
+[
+  {
+    "name": "commonmark/commonmark.0.31.2.json#2",
+    "markdown": "  \tfoo\tbaz\t\tbim\n",
+    "html": "<pre><code>\tfoo\tbaz\t\tbim\n</code></pre>\n",
+    "sanitizedHtml": "<pre><code>\tfoo\tbaz\t\tbim\n</code></pre>\n"
+  },
+  {
+    "name": "commonmark/commonmark.0.31.2.json#6",
+    "markdown": ">\t\tfoo\n",
+    "html": "<blockquote>\n<pre><code>foo\n</code></pre>\n</blockquote>\n",
+    "sanitizedHtml": "<blockquote>\n<pre><code>foo\n</code></pre>\n</blockquote>\n"
+  },
+  {
+    "name": "commonmark/commonmark.0.31.2.json#126",
+    "markdown": "```\n",
+    "html": "<pre><code>\n</code></pre>\n",
+    "sanitizedHtml": "<pre><code>\n</code></pre>\n"
+  },
+  {
+    "name": "new/blockquote_nested_lazy_continuation.md",
+    "markdown": "> > a\nb\n> > c\n",
+    "html": "<blockquote>\n<blockquote>\n<p>a\nb</p>\n<blockquote>\n<p>c</p>\n</blockquote>\n</blockquote>\n</blockquote>\n",
+    "sanitizedHtml": "<blockquote>\n<blockquote>\n<p>a\nb</p>\n<blockquote>\n<p>c</p>\n</blockquote>\n</blockquote>\n</blockquote>\n"
+  },
+  {
+    "name": "new/codespan_backslash_emphasis.md",
+    "markdown": "Note that `\\` or `/` _will_ be interpreted as path separators on Windows, and will match against `/` in glob expressions.\n\nUse `C:\\Users\\` for **home** and `D:\\` for data.\n\n`a\\` *b* `c`\n\n\\`*escaped tick*\\` `code`\n\n`\\` ``\\`` **after double backticks**\n\n_``\\`_``\n\n_`` a`_ ``\n",
+    "html": "<p>Note that <code>\\</code> or <code>/</code> _will_ be interpreted as path separators on Windows, and will match against <code>/</code> in glob expressions.</p>\n<p>Use <code>C:\\Users\\</code> for **home** and <code>D:\\</code> for data.</p>\n<p><code>a\\</code> *b* <code>c</code></p>\n<p>`<em>escaped tick</em>` <code>code</code></p>\n<p><code>\\</code> <code>\\</code> <strong>after double backticks</strong></p>\n<p><em>```</em>``</p>\n<p>_<code>a`_</code></p>\n",
+    "sanitizedHtml": "<p>Note that <code>\\</code> or <code>/</code> _will_ be interpreted as path separators on Windows, and will match against <code>/</code> in glob expressions.</p>\n<p>Use <code>C:\\Users\\</code> for **home** and <code>D:\\</code> for data.</p>\n<p><code>a\\</code> *b* <code>c</code></p>\n<p>`<em>escaped tick</em>` <code>code</code></p>\n<p><code>\\</code> <code>\\</code> <strong>after double backticks</strong></p>\n<p><em>```</em>``</p>\n<p>_<code>a`_</code></p>\n"
+  },
+  {
+    "name": "new/hardbreak_leading_whitespace.md",
+    "markdown": "foo  \n     bar\n\nfoo\\\n     bar\n\nfoo  \n\tbar\n\nfoo  \n  \t bar\n\nfoo\n\tbar\n\nfoo\nbar\n",
+    "html": "<p>foo<br>     bar</p>\n<p>foo<br>     bar</p>\n<p>foo<br>\tbar</p>\n<p>foo<br>  \t bar</p>\n<p>foo\n\tbar</p>\n<p>foo\nbar</p>\n",
+    "sanitizedHtml": "<p>foo<br>     bar</p>\n<p>foo<br>     bar</p>\n<p>foo<br>\tbar</p>\n<p>foo<br>  \t bar</p>\n<p>foo\n\tbar</p>\n<p>foo\nbar</p>\n"
+  },
+  {
+    "name": "new/html_inline_tag_in_list.md",
+    "markdown": "- list item 1\n<b>bold</b>\n- list item 2\n<span>span</span>\n",
+    "html": "<ul>\n<li>list item 1</li>\n</ul>\n<p><b>bold</b></p>\n<ul>\n<li>list item 2</li>\n</ul>\n<p><span>span</span></p>\n",
+    "sanitizedHtml": "<ul>\n<li>list item 1</li>\n</ul>\n<p><b>bold</b></p>\n<ul>\n<li>list item 2</li>\n</ul>\n<p><span>span</span></p>\n"
+  },
+  {
+    "name": "new/image_alt_hard_break.md",
+    "markdown": "![foo\\\nbar](a.png)\n\n![foo  \nbar](b.png)\n\n![foo\\\nbar][ref]\n\n[ref]: c.png\n",
+    "html": "<p>![foo<br>bar](a.png)</p>\n<p><img src=\"b.png\" alt=\"foobar\"></p>\n<p>![foo<br>bar]<a href=\"c.png\">ref</a></p>\n",
+    "sanitizedHtml": "<p>![foo<br>bar](a.png)</p>\n<p><img src=\"b.png\" alt=\"foobar\"></p>\n<p>![foo<br>bar]<a href=\"c.png\">ref</a></p>\n"
+  },
+  {
+    "name": "new/image_alt_nested_formatting.md",
+    "markdown": "![**a *b***](image.png)\n\n![*a **b***](image.png)\n\n![**a `b`**](image.png)\n\n![~~a **b**~~](image.png)\n\n![[a **b**](url)](image.png)\n\n![![a **b**](inner)](image.png)\n\n![**a `*b*`**](image.png)\n",
+    "html": "<p><img src=\"image.png\" alt=\"a *b*\"></p>\n<p><img src=\"image.png\" alt=\"a **b**\"></p>\n<p><img src=\"image.png\" alt=\"a `b`\"></p>\n<p><img src=\"image.png\" alt=\"a **b**\"></p>\n<p><img src=\"image.png\" alt=\"a **b**\"></p>\n<p><img src=\"image.png\" alt=\"a **b**\"></p>\n<p><img src=\"image.png\" alt=\"a `*b*`\"></p>\n",
+    "sanitizedHtml": "<p><img src=\"image.png\" alt=\"a *b*\"></p>\n<p><img src=\"image.png\" alt=\"a **b**\"></p>\n<p><img src=\"image.png\" alt=\"a `b`\"></p>\n<p><img src=\"image.png\" alt=\"a **b**\"></p>\n<p><img src=\"image.png\" alt=\"a **b**\"></p>\n<p><img src=\"image.png\" alt=\"a **b**\"></p>\n<p><img src=\"image.png\" alt=\"a `*b*`\"></p>\n"
+  },
+  {
+    "name": "new/link_escaped_closer.md",
+    "markdown": "[foo](/url\\)\n\n![img](/url\\)\n\n[a](b \"t\\\")\n\n[a](b 't\\')\n\n[a](b (title\\))\n\n[a](b (ti\\)tle))\n\n[link](foo\\)\\:)\n\n[foo](/url\\\\)\n\n[link](foo)\\)\n\n[foo]: /url \"t\\\"\n\n[foo]\n\n[bar]: /url (t\\))\n\n[bar]\n\n[baz]: /url 't\\'\n\n[baz]\n",
+    "html": "<p><a href=\"/url%5C\">foo</a></p>\n<p><img src=\"/url%5C\" alt=\"img\"></p>\n<p><a href=\"b\" title=\"t\\\">a</a></p>\n<p><a href=\"b\" title=\"t\\\">a</a></p>\n<p><a href=\"b\" title=\"title\\\">a</a></p>\n<p><a href=\"b\" title=\"ti)tle\">a</a></p>\n<p><a href=\"foo):\">link</a></p>\n<p><a href=\"/url%5C\">foo</a></p>\n<p><a href=\"foo\">link</a>)</p>\n<p><a href=\"/url\" title=\"t\\\">foo</a></p>\n<p>[bar]: /url (t))</p>\n<p>[bar]</p>\n<p><a href=\"/url\" title=\"t\\\">baz</a></p>\n",
+    "sanitizedHtml": "<p><a href=\"/url%5C\">foo</a></p>\n<p><img src=\"/url%5C\" alt=\"img\"></p>\n<p><a href=\"b\" title=\"t\\\">a</a></p>\n<p><a href=\"b\" title=\"t\\\">a</a></p>\n<p><a href=\"b\" title=\"title\\\">a</a></p>\n<p><a href=\"b\" title=\"ti)tle\">a</a></p>\n<p><a href=\"foo):\">link</a></p>\n<p><a href=\"/url%5C\">foo</a></p>\n<p><a href=\"foo\">link</a>)</p>\n<p><a href=\"/url\" title=\"t\\\">foo</a></p>\n<p>[bar]: /url (t))</p>\n<p>[bar]</p>\n<p><a href=\"/url\" title=\"t\\\">baz</a></p>\n"
+  },
+  {
+    "name": "new/list_lazy_after_nested_block.md",
+    "markdown": "- Setup\n  - Install it:\n    ```\n    npm install\n    ```\nThen run it.\n\n- Notes\n  > ## Warning\nNot in the list.\n\n- - # heading\nNot in the list.\n\n- > ***\nNot in the list.\n\n- item\n  - nested\nlazy line in the nested item\n",
+    "html": "<ul>\n<li><p>Setup</p>\n<ul>\n<li>Install it:<pre><code>npm install\n</code></pre>\n</li>\n</ul>\n<p>Then run it.</p>\n</li>\n<li><p>Notes</p>\n<blockquote>\n<h2>Warning</h2>\n<p>Not in the list.</p>\n</blockquote>\n</li>\n<li><ul>\n<li><h1>heading</h1>\n</li>\n</ul>\n<p>Not in the list.</p>\n</li>\n<li><blockquote>\n<hr>\n<p>Not in the list.</p>\n</blockquote>\n</li>\n<li><p>item</p>\n<ul>\n<li>nested\nlazy line in the nested item</li>\n</ul>\n</li>\n</ul>\n",
+    "sanitizedHtml": "<ul>\n<li><p>Setup</p>\n<ul>\n<li>Install it:<pre><code>npm install\n</code></pre>\n</li>\n</ul>\n<p>Then run it.</p>\n</li>\n<li><p>Notes</p>\n<blockquote>\n<h2>Warning</h2>\n<p>Not in the list.</p>\n</blockquote>\n</li>\n<li><ul>\n<li><h1>heading</h1>\n</li>\n</ul>\n<p>Not in the list.</p>\n</li>\n<li><blockquote>\n<hr>\n<p>Not in the list.</p>\n</blockquote>\n</li>\n<li><p>item</p>\n<ul>\n<li>nested\nlazy line in the nested item</li>\n</ul>\n</li>\n</ul>\n"
+  },
+  {
+    "name": "new/list_loose_tasks.md",
+    "markdown": "- Tasks\n- [x] Task1\n\n- [ ] <pre>Task2</pre>\n\n- [ ] \n",
+    "html": "<ul>\n<li><p>Tasks</p>\n</li>\n<li><p><input checked=\"\" disabled=\"\" type=\"checkbox\"> \nTask1</p>\n</li>\n<li><p><input disabled=\"\" type=\"checkbox\"> </p>\n<pre>Task2</pre>\n</li>\n<li><p><input disabled=\"\" type=\"checkbox\"> </p>\n</li>\n</ul>\n",
+    "sanitizedHtml": "<ul>\n<li><p>Tasks</p>\n</li>\n<li><p><input checked=\"\" disabled=\"\" type=\"checkbox\"> \nTask1</p>\n</li>\n<li><p><input disabled=\"\" type=\"checkbox\"> </p>\n<pre>Task2</pre>\n</li>\n<li><p><input disabled=\"\" type=\"checkbox\"> </p>\n</li>\n</ul>\n"
+  },
+  {
+    "name": "new/tasklist_basic.md",
+    "markdown": "# tight\n\n- [ ] item\n\n# loose\n\n- [ ] item 1\n\n- [ ] item 2\n",
+    "html": "<h1>tight</h1>\n<ul>\n<li><input disabled=\"\" type=\"checkbox\"> item</li>\n</ul>\n<h1>loose</h1>\n<ul>\n<li><p><input disabled=\"\" type=\"checkbox\"> \nitem 1</p>\n</li>\n<li><p><input disabled=\"\" type=\"checkbox\"> \nitem 2</p>\n</li>\n</ul>\n",
+    "sanitizedHtml": "<h1>tight</h1>\n<ul>\n<li><input disabled=\"\" type=\"checkbox\"> item</li>\n</ul>\n<h1>loose</h1>\n<ul>\n<li><p><input disabled=\"\" type=\"checkbox\"> \nitem 1</p>\n</li>\n<li><p><input disabled=\"\" type=\"checkbox\"> \nitem 2</p>\n</li>\n</ul>\n"
+  }
+]

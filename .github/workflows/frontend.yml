@@ -34,6 +34,7 @@ jobs:
           npm audit
           npm audit --omit=dev
           npm run test:security
+          npm run test:markdown
       - name: Build production frontend
         run: npm run build
       - name: Install isolated browser verification tools

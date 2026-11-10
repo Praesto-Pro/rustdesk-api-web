@@ -590,6 +590,19 @@ try {
       cleanScenario(auth.scenario)
       await auth.context.close()
     })
+    await check('Saved administrator Markdown retains its pre-upgrade rendering', async () => {
+      const fixtures = JSON.parse(readFileSync(new URL('./fixtures/administrator-markdown.json', import.meta.url), 'utf8'))
+      const auth = await fixtureContext({ options: { hello: fixtures[0].markdown } })
+      await auth.page.goto(origin + '/#/')
+      for (const fixture of fixtures) {
+        auth.scenario.options.hello = fixture.markdown
+        await auth.page.reload()
+        await visible(auth.page.locator('.account-message'))
+        assert.equal(await auth.page.locator('.account-message').innerHTML(), fixture.sanitizedHtml, fixture.name)
+      }
+      cleanScenario(auth.scenario)
+      await auth.context.close()
+    })
     await check('An account with zero permissions loads its session only once', async () => {
       const auth = await fixtureContext({ permissions: [] })
       await auth.page.goto(origin + '/#/')

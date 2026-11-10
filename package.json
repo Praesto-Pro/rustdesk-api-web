@@ -6,7 +6,8 @@
     "build": "vite build",
     "serve": "vite preview",
     "test:security": "node scripts/verify-security.mjs",
-    "test:contracts": "node scripts/verify-contracts.mjs"
+    "test:contracts": "node scripts/verify-contracts.mjs",
+    "test:markdown": "node scripts/verify-markdown.mjs"
   },
   "dependencies": {
     "@vue/devtools-api": "^8.2.1",
@@ -15,7 +16,8 @@
     "dompurify": "^3.4.17",
     "element-plus": "^2.8.2",
     "js-cookie": "^3.0.1",
-    "marked": "^15.0.4",
+    "marked": "^18.2.0",
+    "marked-legacy": "npm:marked@15.0.12",
     "normalize.css": "^8.0.1",
     "nprogress": "^0.2.0",
     "papaparse": "^5.7.0",

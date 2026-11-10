@@ -36,7 +36,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { ElMessageBox } from 'element-plus'
-import { marked } from 'marked'
+import { parseAdministratorMarkdown } from '@/utils/admin-markdown'
 import DOMPurify from 'dompurify'
 import { httpUrl } from '@/utils/safe-url'
 import changePwdDialog from '@/components/changePwdDialog.vue'
@@ -93,7 +93,7 @@ const toUnBind = async (row) => {
   finally { busyProvider.value = '' }
 }
 const hasAdminMessage = computed(() => typeof appStore.setting.hello === 'string' && !!appStore.setting.hello.trim())
-const html = computed(() => DOMPurify.sanitize(marked(appStore.setting.hello || ''), { USE_PROFILES: { html: true } }))
+const html = computed(() => DOMPurify.sanitize(parseAdministratorMarkdown(appStore.setting.hello || ''), { USE_PROFILES: { html: true } }))
 </script>
 <style scoped lang="scss">
 .account-settings { width: 100%; }
