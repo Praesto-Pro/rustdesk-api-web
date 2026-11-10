@@ -1,20 +1,8 @@
-import Clipboard from 'clipboard'
 import { ElMessage } from 'element-plus'
 import { T } from '@/utils/i18n'
 
 export function handleClipboard (text, event) {
-  const clipboard = new Clipboard(event.target.toString(), {
-    text: () => text,
-  })
-  clipboard.on('success', () => {
-    ElMessage.success(T('CopySuccess'))
-    clipboard.destroy()
-  })
-  clipboard.on('error', () => {
-    ElMessage.error(T('CopyFailed'))
-    clipboard.destroy()
-  })
-  clipboard.onClick(event)
+  return copyDeviceId(text, event)
 }
 
 export function copyImage (targetNode) {
