@@ -6,6 +6,8 @@ on:
     paths:
       - Dockerfile
       - .dockerignore
+      - .gitattributes
+      - LICENSE
       - docker/**
       - backend/**
       - src/**
@@ -57,9 +59,7 @@ jobs:
       - name: Verify combined API and frontend with disposable data
         env:
           CONTAINER_IMAGE: praesto-rustdesk-api:test
-        run: |
-          docker pull lejianwen/rustdesk-api:latest
-          python3 -u scripts/verify-container.py
+        run: python3 -u scripts/verify-container.py
       - name: Publish the tested image
         env:
           IMAGE_TAGS: ${{ steps.meta.outputs.tags }}

@@ -1,4 +1,4 @@
-"""Test a combined image against disposable upstream API data; never production."""
+"""Test container compatibility using disposable data and a synthetic account."""
 import json
 import os
 import re
@@ -9,7 +9,7 @@ import urllib.request
 import uuid
 
 image = os.environ.get('CONTAINER_IMAGE', 'praesto-rustdesk-api:local')
-upstream = os.environ.get('API_IMAGE', 'lejianwen/rustdesk-api:latest')
+baseline = os.environ.get('COMPATIBILITY_IMAGE', image)
 prefix = 'prc-smoke-' + uuid.uuid4().hex[:10]
 data, keys = prefix + '-data', prefix + '-keys'
 containers = []
@@ -58,14 +58,14 @@ try:
     docker('volume', 'create', data)
     docker('volume', 'create', keys)
     # Fixture public key only; no real server key or data is used.
-    docker('run', '--rm', '-v', keys + ':/fixture', '--entrypoint', 'sh', upstream,
+    docker('run', '--rm', '-v', keys + ':/fixture', '--entrypoint', 'sh', image,
            '-c', "printf 'fixture-public-key' > /fixture/id_ed25519.pub")
-    old, origin = start(upstream, '-upstream')
+    old, origin = start(baseline, '-baseline')
     credentials = {'username': 'container-smoke', 'password': 'fixture-password'}
     api(origin, '/user/register', {**credentials, 'confirm_password': credentials['password']})
     api(origin, '/login', credentials)
     docker('stop', old)
-    print('PASS: upstream initializes persistent data and registers a fixture user')
+    print('PASS: baseline initializes persistent data and registers a fixture user')
 
     combined, origin = start(image, '-combined')
     html = request(origin, '/_admin/').decode()

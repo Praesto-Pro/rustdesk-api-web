@@ -1,0 +1,5 @@
+# Runtime assets are copied from the reference image byte for byte.
+docker/runtime/** -text
+# This subtree has its own text=auto rule. Its reference text files use LF.
+docker/runtime/resources/web/js/** eol=lf
+backend/test.sh text eol=lf

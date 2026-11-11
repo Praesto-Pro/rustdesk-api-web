@@ -1,12 +1,11 @@
 # Combined RustDesk API and Praesto frontend
 
-This image extends `lejianwen/rustdesk-api:latest`, replacing its bundled admin
-frontend with the modernized Praesto interface. It retains the upstream startup command, configuration, bundled legacy browser
-client resources, and data layout. The API binary is now built from a pinned
-upstream commit plus the Praesto account/email extension. See
-[backend setup and email administration](backend/README.md) for the source pin,
-SMTP settings, password resets, invitations, key backups, and verification.
-Updating the runtime base image alone does not update the pinned API source.
+The combined image builds the Praesto frontend and the checked-in API source,
+including Praesto's account and email extension. A pinned Alpine base supplies
+the runtime. The repository supplies its default configuration, templates,
+translations, and bundled legacy browser client. See the
+[upstream provenance](docker/PROVENANCE.md) and
+[backend setup guide](backend/README.md).
 
 The API and frontend share port **21114**. `/` redirects to `/_admin/`.
 There is no separate Nginx service, port 8080, or `RUSTDESK_API_URL` setting.
@@ -53,9 +52,8 @@ before pulling, and deploy its `sha-<full-commit>` tag for an unambiguous versio
 docker build --pull -t praesto-rustdesk-api:local .
 ```
 
-For reproducible runtime resources, pin the base image with
-`--build-arg API_IMAGE=lejianwen/rustdesk-api@sha256:<digest>`.
-The API source version is pinned separately by `UPSTREAM_API_REF` in Dockerfile.
+The build reads the API source and runtime assets from this repository. It
+downloads the base images and the locked npm and Go dependencies.
 Managed cloud builds need the session CA for npm:
 
 ```sh
@@ -66,11 +64,11 @@ docker build --pull --secret id=proxy_ca,src="$CODEX_PROXY_CERT" \
 The CA stays out of image layers. Application dependencies use the npm lockfile.
 
 Run `python3 scripts/verify-container.py` after building. It creates disposable
-volumes and containers, registers an account on the upstream image, replaces it
-with the combined image using the same test data, and verifies frontend assets,
-API login, the read-only key mount, browser-client resources, and restart
-persistence. It removes only its own test containers and volumes. It does not
-test migrations from an unidentified older production image.
+volumes and containers, registers a fixture account, starts a new container with
+the same data, and verifies frontend assets, API login, the read-only key mount,
+browser-client resources, and restart persistence. Set `COMPATIBILITY_IMAGE` to
+an explicit older image to seed the fixture there and verify migration into the
+new image. The script removes its own test containers and volumes.
 
 ## Publication
 

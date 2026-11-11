@@ -17,5 +17,5 @@ jobs:
         with:
           go-version: '1.26.10'
           cache: false
-      - name: Verify pinned upstream extension and build the API
+      - name: Verify and build the checked-in API
         run: bash backend/test.sh

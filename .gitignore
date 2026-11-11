@@ -17,4 +17,6 @@ yarn-error.log*
 *.local
 
 yarn.lock
+!docker/runtime/**/yarn.lock
+!docker/runtime/resources/web/js/dist/
 ui-artifacts/

@@ -1,19 +1,17 @@
 # Praesto account/email API extension
 
 The frontend needs real server support for editable messages, SMTP, invitations,
-and email password resets. The combined Docker image now builds the upstream
-API at commit `c5687e150615bfb00d9d105f0883a2802750a8ad`, applies `upstream.patch`,
-and copies `praesto/` into that source tree. The patch only registers the new
-routes and selects the persisted administrator message. Existing API adapters,
-RustDesk protocol code, native account creation, and permission identities remain
-unchanged. This is a maintained backend extension: upstream source updates must
-be reviewed and tested, not silently taken from a moving image tag.
+and email password resets. The combined Docker image builds the API source
+checked in here, including `praesto/`. `upstream.patch` records the changes
+already applied to register the new routes and select the persisted
+administrator message. See the [upstream provenance](../docker/PROVENANCE.md)
+for the source commit and licensing details.
 
 `go.mod` and `go.sum` lock the upstream dependencies (upstream does not check in a
 go.sum). Checksums were generated with Go's checksum database and are verified in
 the image build. The extension adds no external Go dependencies. To refresh the
-upstream source, update the Dockerfile commit, rebase the patch, regenerate locks
-with verification enabled, and rerun the tests and container smoke check.
+upstream source, update the checked-in snapshot and provenance, reapply the
+patch, regenerate the locks, and rerun the tests and container smoke check.
 
 ## Deployment and use
 
@@ -77,23 +75,9 @@ means the SMTP server accepted the message, not proof of inbox delivery.
 
 ## Development validation
 
-Run `bash backend/test.sh` with Go 1.26.10 and a C compiler to fetch a temporary
-checkout at the Dockerfile's pinned commit, apply the extension, verify dependency
-checksums, run race/integration tests, and build the full API. The Account API
-verification PR workflow runs this same command.
-
-Equivalent manual steps in a separate checkout of the pinned upstream commit
-(do not apply to production):
-
-```sh
-git apply /path/to/rustdesk-api-web/backend/upstream.patch
-cp /path/to/rustdesk-api-web/backend/go.mod /path/to/rustdesk-api-web/backend/go.sum .
-cp -R /path/to/rustdesk-api-web/backend/praesto .
-go mod download
-go mod verify
-go test -mod=readonly -race ./praesto
-go build -mod=readonly ./cmd/apimain.go
-```
+Run `bash backend/test.sh` with Go 1.26.10 and a C compiler. It verifies
+dependency checksums, runs the race and integration tests, and builds the
+checked-in API. The Account API verification workflow runs the same command.
 
 Backend integration tests use temporary SQLite databases and captured delivery.
 They cover admin authorization, durable encrypted settings, missing key handling,
